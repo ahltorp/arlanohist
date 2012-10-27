@@ -1,0 +1,6 @@
+#!/bin/sh
+# $Id: deep-tree,v 1.9 2002/05/07 16:21:07 lha Exp $
+if test "X$FAST" != "X" ; then echo "Not running $0" >&4;exit 0; fi
+
+mkdir foo && ( cd foo && $SHELL $SHELLVERBOSE ${srcdir}/dir-tree 5 "0 1 2 3 4" )
+${objdir}/rm-rf foo

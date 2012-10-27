@@ -1,0 +1,5 @@
+#!/bin/sh
+# $Id: intr-read1,v 1.4 2002/07/27 08:58:09 lha Exp $
+if test "X$FAST" != "X" ; then echo "Not running $0" >&4;  exit 0 ; fi
+$objdir/intr-read --alarm ${AFSROOT}/stacken.kth.se/ftp/pub/gnu/gnu-0.2 || exit 1
+exit 0

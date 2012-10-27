@@ -1,0 +1,5 @@
+#!/bin/sh
+# $Id: find-linux,v 1.2 2002/05/07 16:21:08 lha Exp $
+if test "X$FAST" != "X" ; then echo "Not running $0" >&4;  exit 0 ; fi
+linux_src=${1-$AFSROOT/pdc.kth.se/src/OS/Linux/}
+(cd ${linux_src} ; find . ) >&4

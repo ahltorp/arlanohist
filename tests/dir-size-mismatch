@@ -1,0 +1,10 @@
+#!/bin/sh
+# $Id: dir-size-mismatch,v 1.4 2002/05/07 16:21:08 lha Exp $
+if test "X$FAST" != "X" ; then echo "Not running $0" >&4;exit 0; fi
+
+for i in `awk 'BEGIN {for(i=0; i < 1000; ++i) printf "%d\n", i}' /dev/null`; do
+ ln -s hejsan qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq$i
+done
+find . -name 'qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq*' -print | xargs rm
+ln -s foo bar
+rm bar

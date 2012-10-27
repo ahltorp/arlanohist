@@ -1,0 +1,378 @@
+<?xml version="1.0" standalone="yes"?>
+<object class="NSIBObjectData">
+  <string name="targetFramework">IBCarbonFramework</string>
+  <object name="rootObject" class="NSCustomObject" id="1">
+    <string name="customClass">NSApplication</string>
+  </object>
+  <array count="49" name="allObjects">
+    <object class="IBCarbonWindow" id="166">
+      <string name="windowRect">192 53 424 578 </string>
+      <string name="title">AFS Permissions</string>
+      <object name="rootControl" class="IBCarbonRootControl" id="167">
+        <string name="bounds">0 0 232 525 </string>
+        <array count="16" name="subviews">
+          <object class="IBCarbonStaticText" id="180">
+            <string name="bounds">20 105 36 505 </string>
+            <ostype name="controlSignature">arla</ostype>
+            <int name="controlID">100</int>
+          </object>
+          <object class="IBCarbonStaticText" id="182">
+            <string name="bounds">20 20 36 85 </string>
+            <string name="title">File name:</string>
+          </object>
+          <object class="IBCarbonStaticText" id="183">
+            <string name="bounds">69 32 85 174 </string>
+            <string name="title">Directory permissions</string>
+          </object>
+          <object class="IBCarbonCheckBox" id="185">
+            <string name="bounds">90 30 108 80 </string>
+            <ostype name="controlSignature">arla</ostype>
+            <int name="controlID">110</int>
+            <string name="title">List</string>
+            <ostype name="command">chgn</ostype>
+          </object>
+          <object class="IBCarbonCheckBox" id="186">
+            <string name="bounds">112 30 130 114 </string>
+            <ostype name="controlSignature">arla</ostype>
+            <int name="controlID">111</int>
+            <string name="title">Insert file</string>
+            <ostype name="command">chgn</ostype>
+          </object>
+          <object class="IBCarbonCheckBox" id="187">
+            <string name="bounds">134 30 152 120 </string>
+            <ostype name="controlSignature">arla</ostype>
+            <int name="controlID">112</int>
+            <string name="title">Delete file</string>
+            <ostype name="command">chgn</ostype>
+          </object>
+          <object class="IBCarbonCheckBox" id="188">
+            <string name="bounds">156 30 174 121 </string>
+            <ostype name="controlSignature">arla</ostype>
+            <int name="controlID">113</int>
+            <string name="title">Administer</string>
+            <ostype name="command">chgn</ostype>
+          </object>
+          <object class="IBCarbonCheckBox" id="189">
+            <string name="bounds">90 216 108 273 </string>
+            <ostype name="controlSignature">arla</ostype>
+            <int name="controlID">114</int>
+            <string name="title">Read</string>
+            <ostype name="command">chgn</ostype>
+          </object>
+          <object class="IBCarbonCheckBox" id="190">
+            <string name="bounds">112 216 130 273 </string>
+            <ostype name="controlSignature">arla</ostype>
+            <int name="controlID">115</int>
+            <string name="title">Write</string>
+            <ostype name="command">chgn</ostype>
+          </object>
+          <object class="IBCarbonCheckBox" id="191">
+            <string name="bounds">134 216 152 273 </string>
+            <ostype name="controlSignature">arla</ostype>
+            <int name="controlID">116</int>
+            <string name="title">Lock</string>
+            <ostype name="command">chgn</ostype>
+          </object>
+          <object class="IBCarbonPopupButton" id="192">
+            <string name="bounds">44 105 64 345 </string>
+            <ostype name="controlSignature">arla</ostype>
+            <int name="controlID">101</int>
+            <ostype name="command">pupm</ostype>
+            <object name="menu" class="IBCarbonMenu" id="193">
+              <string name="title">Popup:</string>
+              <array count="3" name="items">
+                <object class="IBCarbonMenuItem" id="196">
+                  <string name="title">Item 1</string>
+                </object>
+                <object class="IBCarbonMenuItem" id="195">
+                  <string name="title">Item 2</string>
+                </object>
+                <object class="IBCarbonMenuItem" id="194">
+                  <string name="title">Item 3</string>
+                </object>
+              </array>
+            </object>
+          </object>
+          <object class="IBCarbonStaticText" id="198">
+            <string name="bounds">45 20 61 96 </string>
+            <string name="title">User name:</string>
+          </object>
+          <object class="IBCarbonButton" id="200">
+            <string name="bounds">44 353 64 423 </string>
+            <ostype name="controlSignature">arla</ostype>
+            <int name="controlID">102</int>
+            <string name="title">Delete</string>
+            <ostype name="command">dele</ostype>
+          </object>
+          <object class="IBCarbonButton" id="201">
+            <string name="bounds">192 435 212 505 </string>
+            <ostype name="controlSignature">arla</ostype>
+            <int name="controlID">103</int>
+            <string name="title">Apply</string>
+            <ostype name="command">aply</ostype>
+          </object>
+          <object class="IBCarbonButton" id="204">
+            <string name="bounds">44 435 64 505 </string>
+            <ostype name="controlSignature">arla</ostype>
+            <int name="controlID">105</int>
+            <string name="title">Add...</string>
+            <ostype name="command">add </ostype>
+          </object>
+          <object class="IBCarbonStaticText" id="184">
+            <string name="bounds">69 218 85 327 </string>
+            <string name="title">File permissions</string>
+          </object>
+        </array>
+      </object>
+      <boolean name="hasCollapseBox">FALSE</boolean>
+      <boolean name="hasHorizontalZoom">FALSE</boolean>
+      <boolean name="isResizable">FALSE</boolean>
+      <boolean name="hasVerticalZoom">FALSE</boolean>
+      <int name="carbonWindowClass">5</int>
+      <int name="themeBrush">0</int>
+      <int name="windowPosition">1</int>
+    </object>
+    <reference idRef="167"/>
+    <reference idRef="180"/>
+    <reference idRef="182"/>
+    <reference idRef="183"/>
+    <reference idRef="184"/>
+    <reference idRef="185"/>
+    <reference idRef="186"/>
+    <reference idRef="187"/>
+    <reference idRef="188"/>
+    <reference idRef="189"/>
+    <reference idRef="190"/>
+    <reference idRef="191"/>
+    <reference idRef="192"/>
+    <reference idRef="193"/>
+    <reference idRef="194"/>
+    <reference idRef="195"/>
+    <reference idRef="196"/>
+    <reference idRef="198"/>
+    <reference idRef="200"/>
+    <reference idRef="201"/>
+    <reference idRef="204"/>
+    <object class="IBCarbonWindow" id="205">
+      <string name="windowRect">284 143 473 615 </string>
+      <string name="title">Add user</string>
+      <object name="rootControl" class="IBCarbonRootControl" id="206">
+        <string name="bounds">0 0 189 472 </string>
+        <array count="5" name="subviews">
+          <object class="IBCarbonButton" id="207">
+            <string name="bounds">149 382 169 452 </string>
+            <string name="title">OK</string>
+            <ostype name="command">ok  </ostype>
+            <int name="buttonType">1</int>
+          </object>
+          <object class="IBCarbonButton" id="208">
+            <string name="bounds">149 300 169 370 </string>
+            <string name="title">Cancel</string>
+            <ostype name="command">not!</ostype>
+          </object>
+          <object class="IBCarbonEditText" id="209">
+            <string name="bounds">21 149 37 449 </string>
+            <ostype name="controlSignature">addu</ostype>
+            <int name="controlID">101</int>
+          </object>
+          <object class="IBCarbonStaticText" id="210">
+            <string name="bounds">20 20 36 138 </string>
+            <string name="title">User/group name:</string>
+          </object>
+          <object class="IBCarbonPopupButton" id="213">
+            <string name="bounds">48 146 68 323 </string>
+            <ostype name="controlSignature">addu</ostype>
+            <int name="controlID">102</int>
+            <ostype name="command">list</ostype>
+            <object name="menu" class="IBCarbonMenu" id="214">
+              <string name="title">Popup:</string>
+              <array count="3" name="items">
+                <object class="IBCarbonMenuItem" id="215">
+                  <string name="title">system:administrators</string>
+                </object>
+                <object class="IBCarbonMenuItem" id="216">
+                  <string name="title">system:anyuser</string>
+                </object>
+                <object class="IBCarbonMenuItem" id="212">
+                  <string name="title">system:authuser</string>
+                </object>
+              </array>
+              <boolean name="excludesMarkColumn">TRUE</boolean>
+            </object>
+          </object>
+        </array>
+      </object>
+      <int name="carbonWindowClass">11</int>
+      <int name="themeBrush">53</int>
+      <int name="windowPosition">0</int>
+    </object>
+    <reference idRef="206"/>
+    <reference idRef="207"/>
+    <reference idRef="208"/>
+    <reference idRef="209"/>
+    <reference idRef="210"/>
+    <reference idRef="212"/>
+    <reference idRef="213"/>
+    <reference idRef="214"/>
+    <reference idRef="215"/>
+    <reference idRef="216"/>
+    <object class="IBCarbonWindow" id="217">
+      <string name="windowRect">422 328 670 808 </string>
+      <string name="title">AFS Info</string>
+      <object name="rootControl" class="IBCarbonRootControl" id="218">
+        <string name="bounds">0 0 248 480 </string>
+        <array count="14" name="subviews">
+          <object class="IBCarbonStaticText" id="223">
+            <string name="bounds">140 20 156 139 </string>
+            <string name="title">Quota information</string>
+          </object>
+          <object class="IBCarbonStaticText" id="224">
+            <string name="bounds">44 20 60 121 </string>
+            <string name="title">File information</string>
+          </object>
+          <object class="IBCarbonStaticText" id="225">
+            <string name="bounds">188 32 204 121 </string>
+            <string name="title">Used:</string>
+          </object>
+          <object class="IBCarbonStaticText" id="228">
+            <string name="bounds">20 20 36 96 </string>
+            <string name="title">File name:</string>
+          </object>
+          <object class="IBCarbonStaticText" id="229">
+            <string name="bounds">20 104 36 460 </string>
+            <ostype name="controlSignature">arla</ostype>
+            <int name="controlID">100</int>
+          </object>
+          <object class="IBCarbonStaticText" id="230">
+            <string name="bounds">188 129 204 268 </string>
+            <ostype name="controlSignature">arla</ostype>
+            <int name="controlID">103</int>
+            <string name="title">90KB</string>
+          </object>
+          <object class="IBCarbonStaticText" id="232">
+            <string name="bounds">164 129 180 268 </string>
+            <ostype name="controlSignature">arla</ostype>
+            <int name="controlID">102</int>
+            <string name="title">100000KB</string>
+          </object>
+          <object class="IBCarbonStaticText" id="233">
+            <string name="bounds">68 129 84 460 </string>
+            <ostype name="controlSignature">arla</ostype>
+            <int name="controlID">101</int>
+            <string name="title">home.foo</string>
+          </object>
+          <object class="IBCarbonStaticText" id="235">
+            <string name="bounds">68 32 84 126 </string>
+            <string name="title">Volume name:</string>
+          </object>
+          <object class="IBCarbonStaticText" id="236">
+            <string name="bounds">164 32 180 121 </string>
+            <string name="title">Usable space:</string>
+          </object>
+          <object class="IBCarbonStaticText" id="237">
+            <string name="bounds">92 32 108 126 </string>
+            <string name="title">Cell name:</string>
+          </object>
+          <object class="IBCarbonStaticText" id="238">
+            <string name="bounds">116 32 132 126 </string>
+            <string name="title">File server(s):</string>
+          </object>
+          <object class="IBCarbonStaticText" id="239">
+            <string name="bounds">92 129 108 460 </string>
+            <ostype name="controlSignature">arla</ostype>
+            <int name="controlID">104</int>
+          </object>
+          <object class="IBCarbonStaticText" id="240">
+            <string name="bounds">116 129 132 460 </string>
+            <ostype name="controlSignature">arla</ostype>
+            <int name="controlID">105</int>
+          </object>
+        </array>
+      </object>
+      <boolean name="hasCollapseBox">FALSE</boolean>
+      <boolean name="hasHorizontalZoom">FALSE</boolean>
+      <boolean name="isResizable">FALSE</boolean>
+      <boolean name="hasVerticalZoom">FALSE</boolean>
+      <int name="carbonWindowClass">5</int>
+      <int name="themeBrush">0</int>
+      <int name="windowPosition">1</int>
+    </object>
+    <reference idRef="218"/>
+    <reference idRef="223"/>
+    <reference idRef="224"/>
+    <reference idRef="225"/>
+    <reference idRef="228"/>
+    <reference idRef="229"/>
+    <reference idRef="230"/>
+    <reference idRef="232"/>
+    <reference idRef="233"/>
+    <reference idRef="235"/>
+    <reference idRef="236"/>
+    <reference idRef="237"/>
+    <reference idRef="238"/>
+    <reference idRef="239"/>
+    <reference idRef="240"/>
+  </array>
+  <array count="49" name="allParents">
+    <reference idRef="1"/>
+    <reference idRef="166"/>
+    <reference idRef="167"/>
+    <reference idRef="167"/>
+    <reference idRef="167"/>
+    <reference idRef="167"/>
+    <reference idRef="167"/>
+    <reference idRef="167"/>
+    <reference idRef="167"/>
+    <reference idRef="167"/>
+    <reference idRef="167"/>
+    <reference idRef="167"/>
+    <reference idRef="167"/>
+    <reference idRef="167"/>
+    <reference idRef="192"/>
+    <reference idRef="193"/>
+    <reference idRef="193"/>
+    <reference idRef="193"/>
+    <reference idRef="167"/>
+    <reference idRef="167"/>
+    <reference idRef="167"/>
+    <reference idRef="167"/>
+    <reference idRef="1"/>
+    <reference idRef="205"/>
+    <reference idRef="206"/>
+    <reference idRef="206"/>
+    <reference idRef="206"/>
+    <reference idRef="206"/>
+    <reference idRef="214"/>
+    <reference idRef="206"/>
+    <reference idRef="213"/>
+    <reference idRef="214"/>
+    <reference idRef="214"/>
+    <reference idRef="1"/>
+    <reference idRef="217"/>
+    <reference idRef="218"/>
+    <reference idRef="218"/>
+    <reference idRef="218"/>
+    <reference idRef="218"/>
+    <reference idRef="218"/>
+    <reference idRef="218"/>
+    <reference idRef="218"/>
+    <reference idRef="218"/>
+    <reference idRef="218"/>
+    <reference idRef="218"/>
+    <reference idRef="218"/>
+    <reference idRef="218"/>
+    <reference idRef="218"/>
+    <reference idRef="218"/>
+  </array>
+  <dictionary count="4" name="nameTable">
+    <string>Dialog</string>
+    <reference idRef="166"/>
+    <string>File&apos;s Owner</string>
+    <reference idRef="1"/>
+    <string>Info</string>
+    <reference idRef="217"/>
+    <string>adduser</string>
+    <reference idRef="205"/>
+  </dictionary>
+  <unsigned_int name="nextObjectID">241</unsigned_int>
+</object>

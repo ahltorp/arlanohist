@@ -1,0 +1,103 @@
+#	$Id: Makefile.in,v 1.18 2003/10/03 17:25:05 map Exp $
+
+SHELL		= /bin/sh
+
+srcdir		= @srcdir@
+top_builddir	= ../../..
+VPATH		= @srcdir@
+
+CC		= @CC@
+RM		= rm
+
+INSTALL		= @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA	= @INSTALL_DATA@
+MKINSTALLDIRS 	= @top_srcdir@/mkinstalldirs
+
+prefix 		= @prefix@
+exec_prefix	= @exec_prefix@
+bindir		= @bindir@
+sbindir 	= @sbindir@
+libexecdir	= @libexecdir@
+
+DEFS		= @DEFS@ -DDEBUG
+CFLAGS		= @CFLAGS@ \
+		  -I$(srcdir)/../../../include \
+		  -I../../../include \
+		  @INC_roken@
+
+LIBS		= @LIB_roken@ @LIBS@
+KAFS_LIBS	= @KAFS_LIBS@
+
+MOUNT_PROG	= mount_nnpfs
+MOUNT_SRCS	= mount_nnpfs.c
+MOUNT_OBJS	= $(MOUNT_SRCS:.c=.o)
+
+TEST_FHOPEN_PROG = test-fhopen
+TEST_FHOPEN_SRCS = test-fhopen.c
+TEST_FHOPEN_OBJS = $(TEST_FHOPEN_SRCS:.c=.o)
+
+MODCTL_PROG	= modctl
+MODCTL_SRCS	= modctl.c
+MODCTL_OBJS	= $(MODCTL_SRCS:.c=.o)
+
+sbin_PROGS	 = $(MOUNT_PROG)
+libexec_PROGS	 = $(MODCTL_PROG)
+PROGS		 = $(sbin_PROGS) $(libexec_PROGS) $(TEST_FHOPEN_PROG)
+SCRIPTS		 = startarla
+
+all:	$(PROGS) $(SCRIPTS)
+
+.c.o:
+	$(CC) -c $(CPPFLAGS) $(DEFS) $(CFLAGS) $<
+
+$(MOUNT_PROG): $(MOUNT_OBJS)
+	$(top_builddir)/libtool $(CC) -o $(MOUNT_PROG) $(MOUNT_OBJS) $(LIBS)
+
+$(TEST_FHOPEN_PROG): $(TEST_FHOPEN_OBJS)
+	$(top_builddir)/libtool $(CC) -o $(TEST_FHOPEN_PROG) $(TEST_FHOPEN_OBJS) $(KAFS_LIBS) $(LIBS)
+
+$(MODCTL_PROG): $(MODCTL_OBJS)
+	$(top_builddir)/libtool $(CC) -o $(MODCTL_PROG) $(MODCTL_OBJS) $(LIBS)
+
+check:	$(TEST_FHOPEN_PROG)
+	./$(TEST_FHOPEN_PROG) /etc/passwd > passwd2
+	cmp /etc/passwd passwd2
+	-rm -f passwd2
+
+distclean: clean
+	$(RM) -f Makefile
+
+clean:
+	$(RM) -f $(PROGS) $(SCRIPTS) *.o *~
+
+startarla: startarla.in
+	sed -e ' s!%sbindir%!$(sbindir)!' -e ' s!%libexecdir%!$(libexecdir)!' -e 's!%ARLACACHEDIR%!$(ARLACACHEDIR)!' $(srcdir)/startarla.in > $@.new
+	mv $@.new $@
+	chmod +x $@
+
+install: all
+	$(MKINSTALLDIRS) $(DESTDIR)$(sbindir)
+	for i in $(sbin_PROGS) $(SCRIPTS); do \
+	  $(INSTALL_PROGRAM) $$i $(DESTDIR)$(sbindir)/$$i; \
+	done
+	$(MKINSTALLDIRS) $(DESTDIR)$(libexecdir)
+	for i in $(libexec_PROGS); do \
+	  $(INSTALL_PROGRAM) $$i $(DESTDIR)$(libexecdir)/$$i; \
+	done
+
+uninstall:
+	for i in $(sbin_PROGS); do \
+	  rm -f $(DESTDIR)$(sbindir)/$$i; \
+	done
+	for i in $(libexec_PROGS); do \
+	  rm -f $(DESTDIR)$(libexecdir)/$$i; \
+	done
+
+TAGS: $(MOUNT_SRCS) $(TEST_FHOPEN_SRCS) $(MODCTL_SRCS)
+	etags $(MOUNT_SRCS) $(TEST_FHOPEN_SRCS) $(MODCTL_SRCS)
+
+Makefile: Makefile.in ../../../config.status
+	cd ../../.. && CONFIG_FILES=nnpfs/solaris/bin/Makefile CONFIG_HEADERS= $(SHELL) config.status
+
+.PHONY: all install uninstall clean check

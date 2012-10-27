@@ -1,0 +1,11 @@
+{
+  Description = "Arla AFS Client";
+  Provides = ("AFS");
+  Requires = ("Network");
+  OrderPreference = "None";
+  Messages =
+  {
+    start = "Starting Arla AFS Client";
+    stop = "Stopping Arla AFS Client";
+  };
+}

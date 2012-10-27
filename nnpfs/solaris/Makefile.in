@@ -1,0 +1,109 @@
+# $Id: Makefile.in,v 1.20 2003/10/03 17:25:05 map Exp $
+
+SHELL		= /bin/sh
+
+srcdir		= @srcdir@
+top_builddir	= ../..
+VPATH		= @srcdir@
+
+CC		= @CC@
+#CC		= cc
+LD		= ld
+
+INSTALL		= @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA	= @INSTALL_DATA@
+MKINSTALLDIRS 	= @top_srcdir@/mkinstalldirs
+
+AFS		= /afs
+
+prefix 		= @prefix@
+exec_prefix	= @exec_prefix@
+libexecdir 	= @libexecdir@
+
+INCLUDES	= -I. -I$(srcdir) \
+		  -I../../include -I$(srcdir)/../../include \
+		  -I$(srcdir)/../include
+DEFS		= @DEFS@ @KERNEL_CFLAGS@ @KERNEL_CPPFLAGS@ -DDEBUG
+CFLAGS		= $(DEFS) $(INCLUDES) @CFLAGS@
+
+SRC		=				\
+		nnpfs_deb.c			\
+		nnpfs_common.c			\
+		nnpfs_dev.c			\
+		nnpfs_message.c			\
+		nnpfs_node.c			\
+		nnpfs_syscalls.c			\
+		nnpfs_vfsops.c			\
+		nnpfs_vnodeops.c			\
+		nnpfs_wrap.c
+
+OBJ 		= $(SRC:.c=.o)
+MOD 		= modnnpfs
+MODREAL		= nnpfs
+
+SUBDIRS		= bin
+
+all: $(MOD) all-subdirs
+
+all-subdirs:
+	for i in $(SUBDIRS); do \
+	(cd $$i && $(MAKE) all); \
+	done
+
+$(MOD): $(OBJ)
+	$(LD) -r -o ./$(MOD) $(OBJ)
+
+load: $(MOD)
+	rm -fr foo
+	mkdir foo
+	cp $(MOD) foo/$(MODREAL)
+	(cd foo ; modload $(MODREAL))
+
+unload:
+	 foo=`modinfo | awk '$$6 ~ /nnpfs/ { print $$1 ; exit 0; }'`; \
+         if test $$foo != ""; then modunload -i $$foo ; fi
+
+mount:
+	./bin/mount_nnpfs /dev/nnpfs0 $(AFS)
+
+unmount:
+	umount $(AFS)
+
+
+install: all install-subdirs
+	$(MKINSTALLDIRS) $(DESTDIR)$(libexecdir)
+	$(INSTALL_DATA) $(MOD) $(DESTDIR)$(libexecdir)/$(MODREAL)
+
+uninstall:
+	rm -f $(DESTDIR)$(libexecdir)/$(MODREAL)
+
+install-subdirs:
+	for i in $(SUBDIRS); do \
+	(cd $$i && $(MAKE) install); \
+	done
+
+clean:	clean-subdirs
+	rm -f $(MOD) $(MODREAL) $(OBJ)
+
+clean-subdirs:
+	for i in $(SUBDIRS); do \
+	(cd $$i && $(MAKE) clean); \
+	done
+
+distclean-subdirs:
+	for i in $(SUBDIRS); do \
+	(cd $$i && $(MAKE) distclean); \
+	done
+
+distclean: clean distclean-subdirs
+	rm -f Makefile
+
+Makefile: Makefile.in ../../config.status
+	cd ../.. ; CONFIG_FILES=nnpfs/solaris/Makefile CONFIG_HEADERS= $(SHELL) config.status
+
+
+TAGS:	$(SRC)
+	etags $(SRC)
+
+.PHONY: all all-subdirs load install uninstall install-subdirs clean clean-subdirs

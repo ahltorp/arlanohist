@@ -1,0 +1,83 @@
+#
+# Makefile for building a standalone send-pr.
+# $Id: Makefile.in,v 1.4 2005/12/11 15:21:57 lha Exp $
+#
+
+srcdir		= @srcdir@
+top_builddir	= ..
+VPATH		= @srcdir@
+
+
+RELEASE=	@VERSION@
+SUBMITTER=	net
+
+EMACS=		emacs
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+datadir = @datadir@
+infodir = @infodir@
+lispdir = $(prefix)/lib/emacs/site-lisp
+mandir = @mandir@
+man1dir = $(mandir)/man1
+
+all: arla-send-pr send-pr.el
+
+arla-send-pr: send-pr.sh
+	DATE=`date +%Y%m%d` && \
+	REL=`echo $(RELEASE) | sed "s/pre\([0-9]*\)/pre\1-$$DATE/"` && \
+	sed -e 's,@DATADIR@,$(datadir),g' \
+	    -e 's,@SUBMITTER@,$(SUBMITTER),g' \
+	    -e "s/@DEFAULT_RELEASE@/$$REL/g" \
+		$(srcdir)/send-pr.sh > arla-send-pr
+
+send-pr.el: send-pr-el.in
+	DATE=`date +%Y%m%d` && \
+	REL=`echo $(RELEASE) | sed "s/pre\([0-9]*\)/pre\1-$$DATE/"` && \
+	sed -e 's,@DATADIR@,$(datadir),g' \
+	    -e 's,@SUBMITTER@,$(SUBMITTER),g' \
+	    -e "s/@DEFAULT_RELEASE@/$$REL/g" \
+		$(srcdir)/send-pr-el.in > send-pr.el
+
+send-pr.elc: send-pr.el
+	-$(EMACS) -batch -q -f batch-byte-compile send-pr.el
+
+install: all
+	if [ -d $(DESTDIR)$(prefix) ]; then true ; else mkdir $(DESTDIR)$(prefix) ; fi
+	if [ -d $(DESTDIR)$(bindir) ]; then true ; else mkdir $(DESTDIR)$(bindir) ; fi
+	cp arla-send-pr $(DESTDIR)$(bindir)
+	chmod 755 $(DESTDIR)$(bindir)/arla-send-pr
+	-parent=`echo $(lispdir)|sed -e 's@/[^/]*$$@@'`; \
+	if [ -d $(DESTDIR)$$parent ] ; then true ; else mkdir $(DESTDIR)$$parent ; fi
+	if [ -d $(DESTDIR)$(lispdir) ] ; then true ; else mkdir $(DESTDIR)$(lispdir) ; fi
+	cp send-pr.el* $(DESTDIR)$(lispdir)
+	chmod 644 $(DESTDIR)$(lispdir)/send-pr.el*
+	if [ -d $(DESTDIR)$(infodir) ] ; then true ; else mkdir $(DESTDIR)$(infodir) ; fi
+	cp $(srcdir)/send-pr.info $(DESTDIR)$(infodir)/send-pr.info
+	chmod 644 $(DESTDIR)$(infodir)/send-pr.info
+	if [ -d $(DESTDIR)$(datadir) ] ; then true ; else mkdir $(DESTDIR)$(datadir) ; fi
+	if [ -d $(DESTDIR)$(datadir)/gnats ] ; then true ; else mkdir $(DESTDIR)$(datadir)/gnats ; fi
+	cp $(srcdir)/categories $(DESTDIR)$(datadir)/gnats/stacken
+	chmod 644 $(DESTDIR)$(datadir)/gnats/stacken
+	-parent=`echo $(man1dir)|sed -e 's@/[^/]*$$@@'`; \
+	if [ -d $(DESTDIR)$$parent ] ; then true ; else mkdir $(DESTDIR)$$parent ; fi
+	if [ -d $(DESTDIR)$(man1dir) ] ; then true ; else mkdir $(DESTDIR)$(man1dir) ; fi
+	cp $(srcdir)/send-pr.1 $(DESTDIR)$(man1dir)/arla-send-pr.1
+	chmod 644 $(DESTDIR)$(man1dir)/arla-send-pr.1
+
+uninstall:
+	rm -f $(DESTDIR)$(bindir)/arla-send-pr
+	rm -f $(DESTDIR)$(lispdir)/send-pr.el
+	rm -f $(DESTDIR)$(lispdir)/send-pr.elc
+	rm -f $(DESTDIR)$(infodir)/send-pr.info
+	rm -f $(DESTDIR)$(datadir)/gnats/stacken
+	rm -f $(DESTDIR)$(man1dir)/arla-send-pr.1
+
+clean:
+	rm -f arla-send-pr send-pr.el*
+
+distclean: clean
+
+Makefile:	Makefile.in ../../config.status
+		cd ../..; CONFIG_FILES=tools/gnats/Makefile CONFIG_HEADERS= $(SHELL) config.status

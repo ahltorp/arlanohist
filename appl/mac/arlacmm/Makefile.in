@@ -1,0 +1,113 @@
+# $Id: Makefile.in,v 1.10 2006/03/15 15:50:44 tol Exp $
+
+srcdir		= @srcdir@
+top_srcdir	= @top_srcdir@
+top_builddir	= ../../..
+VPATH		= @srcdir@
+
+CC		= @CC@
+LN_S		= @LN_S@
+
+INSTALL		= @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA	= @INSTALL_DATA@
+MKINSTALLDIRS 	= @top_srcdir@/mkinstalldirs
+
+prefix 		= @prefix@
+exec_prefix 	= @exec_prefix@
+libdir 		= @libdir@
+libexecdir 	= @libexecdir@
+bindir 		= @bindir@
+mandir		= @mandir@
+transform	= @program_transform_name@
+EXECSUFFIX	= @EXECSUFFIX@
+
+progdir		= $(bindir)/ArlaCMM.bundle
+contentsdir	= $(progdir)/Contents
+macosdir	= $(contentsdir)/MacOS
+resourcesdir	= $(contentsdir)/Resources
+
+DEFS		= @DEFS@
+
+SHELL		= /bin/sh
+
+CFLAGS		= @CFLAGS@
+
+ETAGS		= etags
+MAKEDEPEND	= makedepend
+INCLUDES	= -I$(top_srcdir) \
+		  -I$(top_srcdir)/include \
+		  -I$(top_srcdir)/appl/lib \
+		  -I$(top_builddir)/rxdef \
+		  -I$(top_builddir)/include \
+		  -I. \
+		  @INC_roken@ \
+
+DEFINES		=
+REALCFLAGS	= $(INCLUDES) @KAFS_CPPFLAGS@ @KRB5_INC_FLAGS@ $(DEFINES) $(CFLAGS)
+KERNEL_INCLUDE  = @KERNEL_INCLUDE@
+KAFS_LIBS	= @AIX_EXTRA_KAFS@ @KAFS_LIBS@
+LIBS		= ../../../lib/ko/libko.la ../../../util/libarlautil.la \
+		  -framework Carbon -bundle \
+		  @LIB_roken@ \
+		  $(KAFS_LIBS) \
+		  @LIBS@
+
+LIBDEPENDS	= ../../../lib/ko/libko.la ../../../util/libarlautil.la
+
+PROGS		= arlacmm
+
+ARLACMM_SRCS    = main.c pioctl.c permwin.c adduserwin.c util.c infowin.c
+
+SRCS		= $(ARLACMM_SRCS)
+ARLACMM_OBJS	= $(ARLACMM_SRCS:.c=.o)
+
+HDRS		= arlacmm.h
+
+all:		$(PROGS)
+
+.PHONY: all install uninstall depend tags clean
+
+.c.o:
+		$(CC) -c $(CPPFLAGS) $(DEFS) -I$(srcdir) -I. $(REALCFLAGS) $<
+
+install: all
+		$(MKINSTALLDIRS) $(DESTDIR)$(progdir)
+		$(MKINSTALLDIRS) $(DESTDIR)$(contentsdir)
+		$(MKINSTALLDIRS) $(DESTDIR)$(macosdir)
+		$(MKINSTALLDIRS) $(DESTDIR)$(resourcesdir)
+		$(MKINSTALLDIRS) $(DESTDIR)$(resourcesdir)/dialog.nib
+		$(INSTALL_PROGRAM) arlacmm $(DESTDIR)$(macosdir)
+		$(INSTALL_DATA) $(srcdir)/Info.plist $(DESTDIR)$(contentsdir)
+		$(INSTALL_DATA) $(srcdir)/PkgInfo $(DESTDIR)$(contentsdir)
+		$(INSTALL_DATA) $(srcdir)/dialog.nib/classes.nib $(DESTDIR)$(resourcesdir)/dialog.nib
+		$(INSTALL_DATA) $(srcdir)/dialog.nib/info.nib $(DESTDIR)$(resourcesdir)/dialog.nib
+		$(INSTALL_DATA) $(srcdir)/dialog.nib/objects.xib $(DESTDIR)$(resourcesdir)/dialog.nib
+
+uninstall:
+		rm -rf $(DESTDIR)$(progdir)
+
+arlacmm:	$(ARLACMM_OBJS) $(LIBDEPENDS)
+		../../../libtool --mode=link $(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(ARLACMM_OBJS) $(LIBS)
+
+Makefile:	Makefile.in ../../../config.status
+		cd ../../..; CONFIG_FILES=appl/mac/arlacmm/Makefile CONFIG_HEADERS= $(SHELL) config.status
+
+depend:		$(CFILES)
+		$(MAKEDEPEND) -- $(REALCFLAGS) -- $^
+
+tags:		TAGS
+
+TAGS:		$(SRCS) $(HDRS)
+		$(ETAGS) -t $(SRCS) $(HDRS)
+
+clean		:
+		rm -f $(PROGS) $(OBJS) *~ *.o core
+
+mostlyclean:	clean
+
+distclean:	clean
+		rm -f Makefile
+
+realclean:	distclean
+		rm -f TAGS

@@ -1,0 +1,132 @@
+# $Id: Makefile.in,v 1.26 2005/04/06 20:29:15 tol Exp $
+
+srcdir		= @srcdir@
+top_builddir	= ../..
+VPATH		= @srcdir@
+
+CC		= @CC@
+
+INSTALL		= @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA	= @INSTALL_DATA@
+MKINSTALLDIRS 	= @top_srcdir@/mkinstalldirs
+
+prefix 		= @prefix@
+exec_prefix 	= @exec_prefix@
+libdir 		= @libdir@
+libexecdir 	= @libexecdir@
+bindir 		= @bindir@
+sysconfdir	= @sysconfdir@
+transform	= @program_transform_name@
+
+VLDBSERVER_BIN	= vldbserver
+
+DEFS		= @DEFS@ -DMILKO_SYSCONFDIR=\"$(sysconfdir)\"
+
+SHELL		= /bin/sh
+
+CFLAGS		= @CFLAGS@
+LDFLAGS		= @LDFLAGS@
+
+ETAGS		= etags
+MAKEDEPEND	= makedepend
+AFSWSROOT	= /usr/afsws
+RXKADINC	= -I$(srcdir)/../rxkad
+INCLUDES	= -I$(srcdir)/../.. \
+		  -I../../include \
+		  -I$(srcdir)/../../include \
+		  -I$(srcdir)/../lib/mlog \
+		  -I$(srcdir)/../lib/mdb \
+		  -I$(srcdir)/../lib/msecurity \
+		  -I../../rxdef \
+		  @INC_roken@ \
+		  $(RXKADINC)
+DEFINES		= -DDEBUG
+REALCFLAGS	= $(INCLUDES) @KRB5_INC_FLAGS@ $(DEFINES) $(CFLAGS) -DRXDEBUG
+RXKADLIB	= @RXKAD_LIBS@
+DBLIB		= @DBLIB@
+LIBS		= -L../../rxdef -lrxvlserver \
+		  -L../lib/msecurity -lmsecurity \
+		  -L../lib/mlog -lmlog \
+		  -L../lib/mdb -lmdb \
+		  -L../../rxdef -lrxvolserver -lrxfsserver -L../../rx -lrx \
+		  ../../lib/ko/libko.la ../../util/libarlautil.la \
+		  -L../../lwp -llwp @PLWP_LIB_FLAGS@ \
+		  $(RXKADLIB) $(DBLIB) \
+		  @LIB_roken@ \
+		  @LIBS@
+LIBDEPENDS	= ../../rxdef/librxdefclient.la ../../rx/librx.la \
+		  ../../lwp/liblwp.a ../../util/libarlautil.la \
+		  ../../lib/ko/libko.la \
+		  ../lib/voldb/libvoldb.a ../lib/vld/libvld.a \
+		  ../lib/msecurity/libmsecurity.a ../lib/mdb/libmdb.a
+PROGS		= vldbserver 
+#vled
+
+SRCS		=				\
+		vled.c				\
+		vl_db.c				\
+		vl_disk.c			\
+		vldbserver.c			\
+		ubikprocs.c
+
+HDRS		= 
+
+vldbserver_OBJS	=				\
+		vl_db.o				\
+		vl_disk.o			\
+		vldbserver.o			\
+		ubikprocs.o
+
+vled_OBJS	=				\
+		vled.o				\
+		vl_db.o
+
+
+.PHONY: all install uninstall depend tags clean
+
+all:		$(PROGS)
+
+.c.o:
+		$(CC) -c $(CPPFLAGS) $(DEFS) -I$(srcdir) -I. $(REALCFLAGS) $<
+
+install: all
+		$(MKINSTALLDIRS) $(DESTDIR)$(libexecdir)
+		PROG_BIN='$(VLDBSERVER_BIN)'; for x in $$PROG_BIN; do \
+			f=`echo $$x | sed '$(transform)'`; \
+			$(INSTALL_PROGRAM) $$x $(DESTDIR)$(libexecdir)/$$f; \
+		done
+
+uninstall:
+		PROG_BIN='$(VLDBSERVER_BIN)'; for x in $$PROG_BIN; do \
+			f=`echo $$x | sed '$(transform)'`; \
+			rm -f $(DESTDIR)$(libexecdir)/$$f; \
+		done
+
+vldbserver:	$(vldbserver_OBJS) $(LIBDEPENDS)
+		$(top_builddir)/libtool $(CC) $(LDFLAGS) -o $@ $(vldbserver_OBJS) $(LIBS)
+
+vled:		$(vled_OBJS) $(LIBDEPENDS)
+		$(top_builddir)/libtool $(CC) $(LDFLAGS) -o $@ $(vled_OBJS) $(LIBS)
+
+Makefile:	Makefile.in ../../config.status
+		cd ../..; CONFIG_FILES=milko/vldb/Makefile CONFIG_HEADERS= $(SHELL) config.status
+
+depend:		$(SRCS)
+		$(MAKEDEPEND) -- $(REALCFLAGS) -- $^
+
+tags:		TAGS
+
+TAGS:		$(SRCS) $(HDRS)
+		$(ETAGS) -t $(SRCS) $(HDRS)
+
+clean		:
+		rm -f $(PROGS) $(OBJS) *~ *.o core *.core
+
+mostlyclean:	clean
+
+distclean:	clean
+		rm -f Makefile config.status
+
+realclean:	distclean
+		rm -f TAGS

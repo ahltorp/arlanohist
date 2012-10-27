@@ -1,0 +1,47 @@
+#!/bin/sh
+
+. /etc/rc.common
+
+StartArla()
+{
+    if [ -f /usr/arla/etc/startatboot ]; then
+	if [ `cat /usr/arla/etc/startatboot` = "yes" ]; then
+
+	    # Inlined version of CheckForNetwork
+	    # Network startup seems flaky, so we loop
+	    until [ $(ifconfig -a inet 2>/dev/null | sed -n -e '/127.0.0.1/d' -e '/0.0.0.0/d' -e '/inet/p' | wc -l) -gt 0 ] ; do
+		sleep 2
+	    done
+	    
+	    echo "Starting Arla"
+	    
+	    test -d /afs || mkdir /afs
+	    /sbin/kextload /usr/arla/bin/nnpfs.kext
+	    /usr/arla/libexec/arlad -D
+	    /usr/arla/sbin/mount_nnpfs /dev/nnpfs0 /afs
+	fi
+    fi
+}
+
+StartService()
+{
+    # start Arla in background, it may take a while
+    StartArla &
+}
+
+
+StopService()
+{
+    echo "Stopping Arla"
+    /usr/arla/sbin/umount_nnpfs /afs
+    killall arlad
+    /sbin/kextunload /usr/arla/bin/nnpfs.kext
+}
+
+RestartService()
+{
+    StopService
+    StartService
+}
+
+RunService "$1"

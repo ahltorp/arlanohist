@@ -1,0 +1,112 @@
+2010-08-08  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_common.c: make it compile on modern MacOS
+	* nnpfs/bsd/nnpfs_syscalls-common.c (remote_pioctl): make it
+	compile on modern MacOS
+	* nnpfs/linux: remove code for linux-2.6.26 and older
+	
+2010-07-30  Tomas Olsson  <tol@stacken.kth.se>
+	* nnpfs/linux/nnpfs_syscalls.c (nnpfs_get_pag_group,store_pag):
+	Don't leak group_info references. From Bo Brantén
+	<bosse@acc.umu.se>
+
+	* nnpfs/bsd/bin/startarla.in: Use kextutil on MacOS, needed on
+	10.6.
+	
+2010-06-29  Tomas Olsson  <tol@stacken.kth.se>
+	* nnpfs/linux/*.c: Support up to 2.6.35-rc1. After Bo Brantén
+	<bosse@acc.umu.se>
+	
+2010-06-16  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/bsd/*.c: Adapt to modern OpenBSD. After Bo Brantén
+	<bosse@acc.umu.se>.
+
+	* nnpfs/bsd/nnpfs/nnpfs_{node,vfsops-bsd}.h: Adapt to modern
+	OpenBSD. After Bo Brantén <bosse@acc.umu.se>.
+
+2010-03-04  Tomas Olsson  <tol@stacken.kth.se>
+
+	* arlad/arlad.8: Fix overlapping blocks, from Jason McIntyre
+	<jmc@openbsd.org> via Ingo Schwarze <schwarze@openbsd.org>
+
+2009-03-01  Tomas Olsson  <tol@stacken.kth.se>
+	* util/log.c (log_unit_free): better compacting of Log_unit
+	list. After Charles Longeau <chl@openbsd.org>
+
+2009-02-24  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_{vnodeops,vfsops,syscalls}-common.c: Avoid large
+	stack allocations. From Charles Longeau <chl@openbsd.org>
+
+	* nnpfs/include/nnpfs/nnpfs_message.h: Spelling. From Charles
+	Longeau <chl@openbsd.org>
+
+2008-09-01  Tomas Olsson  <tol@stacken.kth.se>
+
+	* appl/fs/fs.c (apropos_cmd): correct argc check. From Antoine
+	Millet <antoine.millet@gmail.com>
+
+2008-03-08  Tomas Olsson <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_inodeops.c: Adapt to 2.6.23+. From Frej
+	Drejhammar <frej.drejhammar@gmail.com>
+
+	* nnpfs/linux/nnpfs_blocks.c (nnpfs_block_open): use
+	vfs_path_lookup() on 2.6.23+. After Frej Drejhammar
+	<frej.drejhammar@gmail.com>
+
+2008-02-27  Tomas Olsson <tol@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_blocks.c (nnpfs_block_extend): fix typo, spotted
+	by Robert Watson <rwatson@FreeBSD.org>
+
+	* nnpfs/bsd/nnpfs_vnodeops-bsd.c (nnpfs_lk_info): avoid warnings,
+	hinted by Robert Watson <rwatson@FreeBSD.org>
+
+2008-02-26  Tomas Olsson <tol@stacken.kth.se>
+
+	* configure.in: steps to support modern FreeBSD. From Robert
+	Watson <rwatson@FreeBSD.org> and Alec Kloss
+	
+	* include/afssysdefs.h: ifdef properly. From Robert Watson
+	<rwatson@FreeBSD.org>
+
+	* cf/bsd-func-suser.m4: try to support modern FreeBSD. After
+	Robert Watson <rwatson@FreeBSD.org> and Alec Kloss
+
+	* cf/bsd-insmntque.m4, bsd-vfs-quotactl.m4,
+	bsd-vnode-create-vobject.m4, bsd-vop-open.m4, bsd-vop-unlock.m4:
+	added. From Robert Watson <rwatson@FreeBSD.org> and Alec Kloss
+
+	* nnpfs/bsd/bin/{mntopts.h,mount_nnpfs.c}: compile on modern
+	FreeBSD. After Robert Watson <rwatson@FreeBSD.org> and Alec Kloss
+
+	* nnpfs/bsd/nnpfs/nnpfs_{common,locl,vfsops-bsd}.h: compile on
+	modern FreeBSD. After Robert Watson <rwatson@FreeBSD.org> and Alec
+	Kloss
+
+	* nnpfs/bsd/*.c: compile on modern FreeBSD. After Robert Watson
+	<rwatson@FreeBSD.org> and Alec Kloss
+	
+	* nnpfs/freebsd/FreeBSD-Makefile: compile on modern FreeBSD. After
+	Robert Watson <rwatson@FreeBSD.org> and Alec Kloss
+	
+	* nnpfs/bsd/nnpfs_vfsops-bsd.c:
+	remove unused fh things
+
+	* nnpfs/bsd/nnpfs/nnpfs_{syscalls,vfsops}.h:
+	remove unused fh things
+
+2008-02-21  Tomas Olsson <tol@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: Remve NetBSDism. From Robert
+	Watson <rwatson@FreeBSD.org>
+
+	* nnpfs/bsd/nnpfs_syscalls-wrap-freebsd.c: Remove kafs.h, from
+	Robert Watson <rwatson@FreeBSD.org>
+
+	* appl/fs/Makefile.am: install man page. From Robert Watson
+	<rwatson@FreeBSD.org>
+
+For older ChangeLog entries see ChangeLog.2007

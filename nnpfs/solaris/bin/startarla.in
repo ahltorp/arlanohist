@@ -1,0 +1,93 @@
+#!/bin/sh
+#
+# A simple startupscript to start arla for Solaris.
+# 
+# You must have a path that includes modload, drvconfig, egrep, awk
+# modctl, mount_nnpfs, and arlad.
+#
+# $Id: startarla.in,v 1.6 2002/09/07 10:47:51 lha Exp $
+#
+# Usage: startarla [sysnum]
+
+PATH=/sbin:/usr/sbin:/usr/bin:/bin
+SBINDIR=%sbindir%
+LIBEXECDIR=%libexecdir%
+CACHEDIR=%ARLACACHEDIR%
+OSVERSION=`uname -r`
+
+if [ "$1" != "" ]; then
+  WANTSYSNUM=$1
+elif [ $OSVERSION = "5.6" ] ; then
+  WANTSYSNUM=105
+elif [ $OSVERSION = "5.7" ]; then
+  WANTSYSNUM=73
+elif [ $OSVERSION = "5.8" ]; then
+  WANTSYSNUM=65
+else
+  echo "Unknown syscall number, please specify one"
+  echo "Usage: startarla [sysnum]"
+fi
+
+if [ ! -e $CACHEDIR ] ; then
+   mkdir $CACHEDIR
+   chmod 700 $CACHEDIR
+   chown root $CACHEDIR
+fi
+
+SYSNUM=`cat /etc/name_to_sysnum | awk '$1 == "nnpfs" {print $a ; exit 0}'`
+SYSNUM_INSERTED=no
+
+if [ "$SYSNUM" = "" ] ; then
+  SYSNUM=$WANTSYSNUM
+  if egrep "^[^ 	]+[ 	]+$SYSNUM[ 	]*\$" /etc/name_to_sysnum > /dev/null ; then
+    echo "There is already a module using system call $SYSNUM"
+    echo "Please specify another one"
+    echo "Usage: startarla [sysnum]"
+    exit
+  else
+    echo "nnpfs syscall did not exist, registering at $SYSNUM"
+    echo "nnpfs $SYSNUM" >> /etc/name_to_sysnum
+    SYSNUM_INSERTED=yes
+    # Update kernel syscall table
+    modctl
+  fi
+fi
+
+MAJOR=`cat /etc/name_to_major | awk '$1 == "nnpfs" {print $2 ; exit 0}'`
+
+if [ "$MAJOR" = "" ]; then
+  MAJOR=`cat /etc/name_to_major | sort -n +1 | awk 'BEGIN {a=0} $2 == a {a++} END {print a}'`
+  echo "nnpfs $MAJOR" >> /etc/name_to_major
+fi
+
+echo 'name="nnpfs" parent="pseudo" instance=0;' > /usr/kernel/drv/nnpfs.conf
+
+drvconfig -i nnpfs -b -m $MAJOR
+
+modload $LIBEXECDIR/nnpfs 2> /dev/null
+MODLOAD_RET=$?
+
+if [ $MODLOAD_RET = 28 ]; then
+  if [ $SYSNUM_INSERTED = yes ]; then
+    echo "/etc/name_to_sysnum is now updated."
+    echo "You need to reboot the machine and run this script again."
+    exit
+  else
+    echo "Can't load the kernel module!"
+    echo "Have you rebooted the machine since you first ran the script?"
+    exit
+  fi
+elif [ $MODLOAD_RET != 0 ]; then
+  echo "Can't load the kernel module!"
+  echo "modload exit code: $MODLOAD_RET"
+  exit
+fi
+
+drvconfig -i nnpfs
+if [ ! -h /dev/nnpfs0 ]; then
+  ln -sf /devices/pseudo/nnpfs\@0\: /dev/nnpfs0
+fi
+
+test -d /afs || mkdir /afs
+${SBINDIR}/mount_nnpfs /dev/nnpfs0 /afs
+${LIBEXECDIR}/arlad /dev/nnpfs0

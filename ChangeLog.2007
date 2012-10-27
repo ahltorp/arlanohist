@@ -1,0 +1,448 @@
+2007-12-03  Tomas Olsson <tol@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_vnodeops-netbsd.c (nnpfs_netbsd_write): no
+	reason to zero out more than offset's block, nnpfs_data_valid()
+	handles the rest Update (C)
+
+	* nnpfs/bsd/nnpfs_syscalls-common.c (store_pag): use NNPFSDEB,
+	clean up
+
+2007-11-25  Rasmus Kaj <kaj@stacken.kth.se>
+
+        * nnpfs/bsd/nnpfs_vfsops-common.c, rxdef/pts.xg, doc/arla.info,
+          doc/prog-disco.texi, doc/real-world.texi: Spelling fixes.
+
+          From Martynas Venckus through Jason McIntyre <jmc@kerhand.co.uk>
+
+2007-11-25  Tomas Olsson <tol@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_common.c: Avoid compiling on Mac OS 10.5
+
+	* nnpfs/bsd/nnpfs_syscalls-common.c: update (C), disable kauth
+	PAGs on Mac OS for now
+	(nnpfs_unpag): fixup
+
+	* nnpfs/bsd/nnpfs_dev-common.c (nnpfs_devclose_common): no need
+	for proc_rele() on Mac OS
+
+	* lwp/make-process.o.sh.in: map ppc* -> ppc so we can understand
+	MacOS 10.5 better
+
+	* nnpfs/bsd/nnpfs_*.c: basic support for netbsd-4
+
+	* nnpfs/bsd/nnpfs_vnodeops-bsd.c (nnpfs_lookup): adapt to netbsd-4
+	locking changes. From Pavel Cahyna
+
+	* nnpfs/bsd/nnpfs_vfsops-bsd.c: better ifdefs. Thanks to Jonathan
+	A. Kollasch
+
+	* nnpfs/bsd/nnpfs_{common-bsd,syscalls-common}.c: use kauth PAGs
+	on NetBSD. From Jonathan A. Kollasch
+
+	* nnpfs/bsd/nnpfs/nnpfs_{syscalls,locl}.h: use kauth PAGs on
+	NetBSD. From Jonathan A. Kollasch
+	
+	* tests/{*emacs*,discon-tar*,getdents-and-unlink*,parallel-read}:
+	use emacs-22.1
+
+	* tests/build-gdb: use gdb-6.7.1
+
+2007-11-05  Tomas Olsson <tol@stacken.kth.se>
+
+	* arlad/{Makefile.in,arla-fuse.c} add arla-fuse, exporting arla
+	through FUSE
+
+	* arlad/messages.* (afsrights2nnpfsrights): export
+
+	* Makefile.am: arlad/arla-cli needs appl/lib
+
+2007-10-31  Tomas Olsson <tol@stacken.kth.se>
+
+	* conf/CellServDB: >grand.central.org GCO Public CellServDB 25 Oct
+	2007
+
+2007-07-17  Magnus Ahltorp  <map@kth.se>
+
+	* appl/lib/arlalib.c: Implement arlalib_getcred
+
+2007-07-15  Magnus Ahltorp  <map@kth.se>
+
+	* arlad/arla-cli.c: better ls
+
+2007-07-13  Magnus Ahltorp  <map@kth.se>
+
+	* arlad/inter.c (read_symlink): memcpy only as many bytes as there
+	are
+
+2007-07-12  Magnus Ahltorp  <map@kth.se>
+
+	* arlad/arla-cli.c (insert_dir_entry): actually grow array
+
+2007-07-09  Magnus Ahltorp  <map@kth.se>
+
+	* arlad/arla-cli.c: Added completion, Implement pwd
+
+2007-06-28  Magnus Ahltorp  <map@kth.se>
+
+	* arlad/kernel.c (worker_setdebuginfo): log when running in
+	arla-cli
+
+2007-06-28  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* arlad/cred.h: rename rxgk to token_rxgk.
+
+	* arlad/cred.c: Free memory.
+
+	* arlad/cred.h: Add missing bits.
+
+2007-06-28  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* arlad/cred.c: Free memory.
+
+	* arlad/cred.h: Add missing bits.
+
+2007-05-16  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* rxgk/rxgk_srpc.c: set flags and level from param.
+
+	* rxgk/rxgk.h: add flags and min level
+
+	* rxgk/test_server.c: remove unused variable
+
+	* rxgk/rxgk-settoken.c: add flags
+
+	* rxgk/rxgk_locl.h: add flags, clean.
+
+	* arlad/messages.c: add gk_flags
+
+	* rxdef/token.xg: add gk_flags
+	
+	* rxgk/rxgk_proto.xg: add ci_flags
+	
+	* arlad/volcache.c: Downgrade to rxkrb5 or none if the cell db
+	server doesn't support rxgk
+	(add real subsystem function for that)
+	
+2007-05-15  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* rxgk/rxgk_clnt.c: set security header and trailer size
+
+	* rxgk/rxgk_serv.c: set security header and trailer size
+
+	* rxgk/test.xg: Larger the mtu testing.
+
+	* rxgk/test_client.c: Larger the mtu testing.
+
+	* rxgk/rxgk-settoken.c: add realm to target
+
+	* rxgk/rxgk.h: Add glue for returning expiration and user info the
+	fileserver. XXX should be generic layer.
+
+	* rxgk/rxgk_serv.c: Add glue for returning expiration and user
+	info the fileserver. XXX should be generic layer.
+	
+2007-05-14  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* arlad/arla_local.h: include rxgk_proto and token.h
+
+	* rxgk/Makefile.am: define AFS_HCRYPTO for our world
+
+	* rxgk/Makefile.am: Rename rxgk_crypto.c to rxgk_h(eimdal)crypto.c
+	to pave the way for rxgk_r(aw)crypto.c
+
+	* rxgk/rxgk_serv.c: Slowly adapt to OpenAFS.
+
+	* rxgk/rxgk_clnt.c: Slowly adapt to OpenAFS.
+	
+2007-05-13  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* rxgk/Makefile.am: add rxgk-settoken
+
+	* rxgk/rxgk-settoken.c: VIOCSETTOK2/pioctl_set_token sample
+	application talkes to dbservers to get rxgk token and installes it
+	into kernel using pioctl_set_token interface.
+
+	* arlad/Makefile.in: add libtoken.la
+
+	* arlad/messages.c: Use pioctl_set_token for viocsettok2.
+
+	* rxdef/token.xg: Fix name-space.
+	
+2007-05-11  Love Hörnquist Åstrand  <lha@it.su.se>
+	
+	* ydr/output.c: Fix calculation for unions.
+
+	* ydr/output.c: Add size checking for UNIONs.
+
+	* ydr/output.c: Fix freeing UNION.
+
+	* rxdef/Makefile.am: Token interface.
+
+	* rxdef/token.xg: Token interface.
+
+	* ydr: Add UNION support
+
+2007-05-10  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* rxgk/rxgk-service.c: rxgk service
+	
+	* rxgk/Makefile.am: add rxgk_service_SOURCES
+	
+2007-05-09  Love Hörnquist Åstrand  <lha@it.su.se>
+	
+	* rxgk/test_client.c: switch to secure id 5
+
+	* rxgk/rxgk_ticket.c: more comments
+
+	* rxgk/rxgk_srpc.c: reident.
+
+	* rxgk: rename krb5_context, enforce min_level
+
+	* rxgk/test_client.c: we have gss_api
+
+	* rxgk/rxgk_crypto.c: Provide real encryption.
+	
+	* rxgk: update to a new code drop.
+	
+2007-03-28  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/bsd/**.[ch]: forget about device fd, we don't need it
+
+2007-03-27  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/bsd/nnpfs_vfsops-bsd.c: remove knfs support
+
+	* nnpfs/bsd/Makefile.in: remove knfs support
+
+2007-03-14  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/bsd/nnpfs_{message,node-bsd}.c: take proper care of cache
+	vnodes on MacOS too
+
+	* nnpfs/bsd/nnpfs/nnpfs_fs.h: take proper care of cache vnodes on
+	MacOS too
+	
+2007-03-06  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/bsd/nnpfs/*.h: support FreeBSD 6.2, cleanup
+
+	* nnpfs/bsd/*.c: support FreeBSD 6.2, cleanup, better debug prints
+	
+	* nnpfs/bsd/nnpfs_dev-freebsd.c: implement fancy devlock as we did
+	on MacOS, for now
+
+	* nnpfs/freebsd/FreeBSD-Makefile: make sure we get debug info
+
+2007-03-02  Alexander Boström  <abo@kth.se>
+
+	* arlad/arla.c, conf/arla.conf.in: added nnpfs trace options
+
+2007-02-19  Tomas Olsson  <tol@it.su.se>
+
+	* appl/perf/afsfsperf.c: don't include des.h
+
+	* rxgk/test_*.c: clean up headers, obsd socket.h needs types.h
+	
+	* tests/write4.c: use slightly more unique error messages
+
+	* ydr/output.c (generate_standard_c_prologue): redo 64bit ops to
+	avoid "htobe64 redefined" on OpenBSD
+
+	* arlad/messages.c (nnpfs_message_inactivenode): warn about
+	strange messages
+
+	* nnpfs/bsd/nnpfs_vnodeops-common.c (nnpfs_read_common): make sure
+	we don't read past eof
+
+	* arlad/abuf.c (mmap cachetransfer): don't do unnecessary padding
+
+2007-02-16  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: sys/stat.h for OpenBSD
+
+2007-02-15  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/bsd/nnpfs_blocks.c: more *BSD fiddling, use FREAD etc
+	consistently
+
+	* nnpfs/bsd/nnpfs_vnodeops-common.c: more *BSD things, more debug
+	prints, use FREAD etc consistently
+
+2007-02-09  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/bsd/nnpfs_blocks.c (open_file): use lookup(), try to do
+	things "properly"
+
+2007-02-08  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/bsd/nnpfs_message.c (nnpfs_message_installdata): give more
+	context in ENOENT printf
+
+	* nnpfs/bsd/nnpfs_dev-openbsd.c (nnpfs_dev_msleep): added
+
+2007-02-06  Tomas Olsson  <tol@it.su.se>
+
+	* appl/fs/fs_getcalleraccess.c: correct cast
+
+	* appl/rxgklog/.cvsignore added
+
+	* rxgk/rxgk_common.c (rxgk_derive_k0): make it compile with older
+	heimdal; just fail
+
+	* rxgk/test_client.c: #ifdef it all out so we compile with
+	heimdal-0.7.2
+	
+2007-01-25  Love Hörnquist Åstrand  <lha@it.su.se>
+	
+	* appl/rxgklog: rxgk log program
+	
+	* rxgk: rxgk implementation
+	
+	* arlad/conn.c (add_connection): use rxgk
+
+	* arlad/messages.c: Implement ARLA_VIOCSETTOK2.
+
+	* arlad/arla_local.h: include <rxgk/rxgk.h>
+	
+2007-01-24  Tomas Olsson  <tol@it.su.se>
+
+	* arlad/fcache.c: use the new cache path defines
+
+	* nnpfs/include/nnpfs/nnpfs_blocks.h: more elaborate path handling
+	for bsd locking workarounds
+
+	* nnpfs/bsd/{nnpfs/*.h,*.c}: bsd fixes, keep cache vnode open if
+	we can
+
+	* nnpfs/bsd/nnpfs_vnodeops-bsd.c: cleanup, avoid duplicates on
+	NetBSD
+
+2007-01-23  Love Hörnquist Åstrand  <lha@it.su.se>
+	
+	* rx/rx.c: implement rx_[gs]etConnRock prototypes.
+
+	* rx/rx.h: add rx_[gs]etConnRock prototypes.
+	
+2007-01-22  Love Hörnquist Åstrand  <lha@it.su.se>
+	
+	* arlad/arla_local.h: Remove <des.h>
+
+	* arlad/cred.h: Remove <des.h>
+	
+2007-01-22  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* appl/lib/appl_locl.h: Removed <des.h>
+
+2007-01-17  Tomas Olsson  <tol@it.su.se>
+
+	* arlad/fcache.c (try_next_fs): retry on ECONNABORTED, happens if
+	a clone is lost in disk crash
+
+2007-01-16  Tomas Olsson  <tol@it.su.se>
+
+	* rxkad/Makefile.am: disable building KRB4_COMPAT_SOURCES too in
+	our battle against des.h
+
+	* appl/lib/ka-procs.c: disable by default, set KASERVER_SUPPORT to
+	enable
+
+2007-01-15  Tomas Olsson  <tol@it.su.se>
+
+	* arlad/arla_local.h: we don't need des.h (unless there's too much
+	krb4 around?)
+
+2007-01-12  Tomas Olsson  <tol@it.su.se>
+
+	* tests/Makefile.in (genrandom): added
+
+	* arlad/{dynroot,fcache,messages}.c: avoid/fix warnings about
+	uninitialized variables
+	
+	* tests/genrandom.c: added; silly utility that generates
+	predictable "random" data
+
+	* tests/sha1sum.c: fool gcc
+
+	* tests/copy-file-4G: verify checksum
+
+	* appl/mac/make-mac-package.sh.in: don't install the real
+	configuration files, fix things up with 'postflight' script.
+
+	* appl/mac/install/Resources/postflight.in: added; postflight
+	script for mac installer. creates config files from defaults as
+	needed.
+
+	* rxkad/{Makefile.am,rxkad_locl.h} disable server side to get rid
+	of des.h dependency
+
+	* Makefile.am.common (check-local): removed, lives in
+	cf/Makefile.am.common
+
+2007-01-11  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/bsd/nnpfs_vnodeops-bsd.c (nnpfs_fsync): correct syntax,
+	from Jonathan A. Kollasch
+
+	* lib/ko/restest.c: use a cell that actually exists
+
+	* lib/ko/{sysnametest.c,Makefile.am}: support sysnametest
+	--version
+	
+	* nnpfs/bsd/nnpfs_blocks.c (nnpfs_block_open): better cleanup on
+	failure
+
+	* arlad/*-subr.c: use correct signatures for conv_dir* &
+	dir_remove_name
+
+2007-01-09  Tomas Olsson  <tol@it.su.se>
+
+	* Release 0.90 branch, see arla-0-90-branch for changes.
+
+	* NEWS: prepare for 0.90
+
+2007-01-08  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/bsd/bin/startarla.in: MacOS needs a ${CACHEDIR}/cores/ for
+	core dumps to work
+
+	* arlad/abuf.c (*): use arla_debug_assert()
+
+	* arlad/arla_local.h (arla_debug_assert): added; for asserts
+	normally disabled
+
+	* nnpfs/linux/nnpfs_blocks.c (*): use nnpfs_debug_oops()
+
+	* nnpfs/linux/nnpfs/nnpfs_locl.h (nnpfs_debug_oops): added; for
+	BUG()s we usually want disabled
+
+	* nnpfs/bsd/nnpfs_blocks.c (*): use nnpfs_debug_assert()
+
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h (nnpfs_debug_assert): added; for
+	asserts we usually want disabled
+
+2007-01-03  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/linux/nnpfs_syscalls.c: namespace.h is no longer needed
+	(and renamed in 2.6.20).  clean up debugging.
+
+	* nnpfs/linux/nnpfs_node.c (nnpfs_node_add): try not to mess up
+	attrs if node already is in cache
+
+	* nnpfs/bsd/nnpfs_node-bsd.c (nnpfs_new_node): try not to mess up
+	attrs if node already is in cache
+
+	* tests/run-tests.in: add write-link
+
+	* tests/Makefile.in: add write-link, sleepwriter
+
+	* tests/sleepwriter.c: added; utility to loop around write+sleep
+	for a while
+
+	* tests/write-link.c: check that link() doesn't cause statinfo to
+	be corrupted/reverted for dirty file.
+
+2007-01-02  Tomas Olsson  <tol@it.su.se>
+
+	* configure.in: update arla version
+
+For older ChangeLog entries see ChangeLog.2006

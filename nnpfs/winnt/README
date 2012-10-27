@@ -1,0 +1,65 @@
+# $Id: README,v 1.10 2002/09/07 10:48:46 lha Exp $
+
+BEWARE, this isn't even remotely working:
+
+* Required tools to build (as far as I know):
+
+ - A serial cable
+ - Two computers (host and target computer)
+
+ - Microsoft Visual Studio (really just C/C++) (6.0 + SP3)
+ - Windows Platform SDK
+ - Windows Customer Support Diagnostic Support CD
+ - Windows DDK <http://www.microsoft.com/ddk/>
+ - IFS-Kit (or GNU IFS-Kit <http://www.acc.umu.se/~bosse/ntifs.h>)
+ - Some tools from OSR <http:/www.osr.com/resource_downloads.htm>
+	OSR's DeviceTree Utility
+	OSR Driver Loader 
+	OSR's Debug Monitor
+   Thanks OSR!
+
+HOW TO HACK - a short guide
++++++++++++++++++++++++++++
+
+* Install everything on the host computer in the order of
+  the list above. The target computer is that one you crash.
+  You just need to install the "OSR Driver Loader" on that computer.
+
+* Create directory nnpfs/winnt/src/obj/i386/checked
+
+* Run build in nnpfs/winnt/src (or build -Z if you don't believe in
+  dependencies (you don't)).
+
+* On the target computer hack your C:\boot.ini to look that like this:
+
+  [boot loader]
+  timeout=5
+  default=multi(0)disk(0)rdisk(0)partition(1)\WINNT
+  [operating systems]
+  multi(0)disk(0)rdisk(0)partition(1)\WINNT="2000" \
+     /fastdetect /debug /debugport=com2 /debugrate=19200
+
+  NOTE that the line isn't breaked in the file after the \
+  It's just for readability !
+
+  Reboot target computer
+
+* On host computer ``run: windbg -k x86 com1 19200´´
+
+* Copy nnpfs/winnt/src/obj/i386/checked/nnpfs.sys to 
+  TARGETCOMPUTER:%Systemroot%/System32/drivers/
+
+* Use OSR Driver Loader to load module on the target computer.
+
+* Use "mount_nnpfs" to mount nnpfs.
+
+* Start "arlad".
+
+* Make it crash and fix the bugs.
+
+* Be happy and enjoy the wonders of Windows.
+
+Books that might be useful are:
+
+ Windows NT File System Internals, A developer's Guide, 
+ Rajeev Nagar, O'Reilly, ISBN: 1-56592-249-2

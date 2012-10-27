@@ -1,0 +1,47 @@
+# rb's guide till att bygga en release
+#
+# $Id: MAKE-ARLA-RELEASE.txt,v 1.1 2006/06/12 22:11:57 lha Exp $
+#
+
+1. börja med att fippla alla filer så att det blir rätt:
+
+  a. uppdatera NEWS
+  b. uppdatera README
+  c. uppdatera (om det behövs) INSTALL
+
+2. komitta alla dessa ändringar
+
+3. skapa en tag för 'branchpoint': cvs tag arla-0-N-bp
+
+4. skapa en gren från denna: cvs tag -b -r arla-0-N-bp arla-0-N-branch
+
+5. gå över till grenen: cvs update -r arla-0-N-branch
+
+6. testa, testa, testa, på så många OS som möjligt.
+
+7. när allting är helt bra, dubbelkolla
+
+8. kör make-release i release gren katalogen
+
+9. fixa till ChangeLog och force kommita den
+
+10. kör scripts/arla-release.sh 0.N från release grenen i en tom
+    katalog, kopiera filerna till ftp trädet
+
+11. ftp'a hem arla-0-N.tar.gz och prova att den bygger och går att
+    köra
+
+12. upprepa 6, 7, 10 och 11 för ändringar (med 'cvs tag -F arla-0-N'
+    på de filer du ändrat)
+
+13. Bygg binär releaser för följade OS
+
+    Mac OS X: Tomas Olsson
+
+    Tala om när du kommer skicka release brevet så de vet när dödlinan
+    är. Be om binär boll och SHA-1 checksumma så du kan signera
+    filera.
+
+14. Skicka release announcement till arla-announce@stacken.kth.se
+    med approve: header med rätt lösenord (fråga din lokala guru).
+

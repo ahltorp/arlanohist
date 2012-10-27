@@ -1,0 +1,130 @@
+# $Id: Makefile.in,v 1.57 2006/10/24 16:33:34 tol Exp $
+
+SHELL		= /bin/sh
+
+srcdir		= @srcdir@
+top_builddir	= ../..
+VPATH		= @srcdir@
+
+KERNEL_CC	= @KERNEL_CC@
+CC		= @CC@
+LD		= ld
+MKDIR		= mkdir
+RMDIR		= rmdir
+LN_S		= @LN_S@
+RM		= rm
+
+INSTALL		= @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA	= @INSTALL_DATA@
+MKINSTALLDIRS 	= @top_srcdir@/mkinstalldirs
+
+prefix 		= @prefix@
+exec_prefix 	= @exec_prefix@
+libdir 		= @libdir@
+libexecdir 	= @libexecdir@
+bindir 		= @bindir@
+transform	= @program_transform_name@
+EXECSUFFIX	= @EXECSUFFIX@
+
+DEFS		= @DEFS@ @KERNEL_CFLAGS@ @KERNEL_CPPFLAGS@ -DDEBUG
+INC		= -I$(srcdir)/../include \
+		  -I../../include \
+		  -I$(srcdir)/../../include
+INCLUDES	= $(INC)
+CFLAGS		= -I. $(INCLUDES) -Wall -Werror -Wstrict-prototypes -O2 -fomit-frame-pointer -fno-strict-aliasing
+KERNEL_LD_FLAGS	= @KERNEL_LD_FLAGS@
+
+SUBDIRS		= bin
+
+MODULE		= nnpfs.o
+
+MODULE_SRCS	= nnpfs_blocks.c \
+		  nnpfs_common.c \
+		  nnpfs_deb.c \
+		  nnpfs_dev.c \
+		  nnpfs_inodeops.c \
+		  nnpfs_load.c \
+		  nnpfs_message.c \
+		  nnpfs_node.c \
+		  nnpfs_syscalls.c \
+		  nnpfs_syscalls-lossage.c \
+		  nnpfs_vfsops.c
+
+MODULE_OBJS	= $(MODULE_SRCS:.c=.o)
+MODULE_DIR      = $(DESTDIR)/lib/modules/`uname -r`/kernel/fs
+PROG_BIN	= nnpfs.ko
+PROG_BINDIR	= kbuild-work
+
+all: kbuild
+
+# Read about kbuild in Documentation/kbuild
+# and at http://lwn.net/Articles/21823/
+
+KBUILD_INCDIRS+=	$(srcdir)/../include
+KBUILD_INCDIRS+=	../../include
+KBUILD_INCDIRS+=	$(srcdir)/../../include
+KBUILD_INCDIRS+=	$(srcdir)
+
+KBUILD_ABS_INCDIRS=	$(shell for dir in $(KBUILD_INCDIRS); do (cd $$dir && pwd); done)
+
+KBUILD_EXTRA_CFLAGS+=	@DEFS@ -DDEBUG -Wall -Werror -Wstrict-prototypes -fno-strict-aliasing
+KBUILD_EXTRA_CFLAGS+=	$(KBUILD_ABS_INCDIRS:%=-I%)
+
+kbuild-work: $(MODULE_SRCS:%=kbuild-work/%) kbuild-work/Makefile
+
+kbuild-work/%.c: $(srcdir)/%.c
+	$(MKDIR) -p kbuild-work
+	cp $< $@
+
+kbuild-work/Makefile: Makefile
+	$(MKDIR) -p kbuild-work
+	echo  >kbuild-work/Makefile 'EXTRA_CFLAGS+=	$(KBUILD_EXTRA_CFLAGS)'
+	echo >>kbuild-work/Makefile 'obj-m:=		$(MODULE)'
+	echo >>kbuild-work/Makefile 'nnpfs-objs:=	$(MODULE_OBJS)'
+
+kbuild: kbuild-work
+	$(MAKE) -C @SYS@ SUBDIRS=$(CURDIR)/kbuild-work modules
+
+modules_install:
+	$(MKINSTALLDIRS) $(MODULE_DIR)
+	for x in $(PROG_BIN); do \
+		f=`echo $$x | sed '$(transform)'`; \
+		$(INSTALL_PROGRAM) $(PROG_BINDIR)/$$x \
+			$(MODULE_DIR)/$$f; \
+	done
+
+install: all
+	$(MKINSTALLDIRS) $(DESTDIR)$(bindir)
+	for x in $(PROG_BIN); do \
+		f=`echo $$x | sed '$(transform)'`; \
+		$(INSTALL_PROGRAM) $(PROG_BINDIR)/$$x $(DESTDIR)$(bindir)/$$f; \
+	done
+	cd bin && $(MAKE) $(MFLAGS) install
+
+uninstall:
+	for x in $(PROG_BIN); do \
+		f=`echo $$x | sed '$(transform)'`; \
+		rm -f $(DESTDIR)$(bindir)/$$f; \
+	done
+	cd bin && $(MAKE) $(MFLAGS) uninstall
+
+Makefile: Makefile.in ../../config.status
+	cd ../..; CONFIG_FILES=nnpfs/linux/Makefile CONFIG_HEADERS= $(SHELL) config.status
+
+clean:
+	$(RM) -rf kbuild-work
+
+mostlyclean: clean
+
+distclean: clean realclean
+
+realclean:
+	$(RM) Makefile
+
+all clean mostlyclean distclean:
+	SUBDIRS='$(SUBDIRS)'; \
+	for i in $$SUBDIRS; \
+	do (cd $$i && $(MAKE) $(MFLAGS) $@); done
+
+.PHONY: all kbuild kbuild-work clean mostlyclean distclean realclean install uninstall

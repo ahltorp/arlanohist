@@ -1,0 +1,296 @@
+# $Id: Makefile.in,v 1.115 2007/11/05 21:28:57 tol Exp $
+
+srcdir		= @srcdir@
+top_builddir	= ..
+VPATH		= @srcdir@
+
+CC		= @CC@
+
+INSTALL		= @INSTALL@
+INSTALL_PROGRAM = $(top_builddir)/libtool --mode=install @INSTALL_PROGRAM@
+INSTALL_DATA	= @INSTALL_DATA@
+MKINSTALLDIRS 	= @top_srcdir@/mkinstalldirs
+
+prefix 		= @prefix@
+exec_prefix 	= @exec_prefix@
+libdir 		= @libdir@
+libexecdir 	= @libexecdir@
+bindir 		= @bindir@
+sbindir		= @sbindir@
+sysconfdir	= @sysconfdir@
+mandir		= @mandir@
+transform	= @program_transform_name@
+ARLACACHEDIR	= @ARLACACHEDIR@
+ARLACONFFILE	= @ARLACONFFILE@
+
+ARLA_SBIN	= arla-cli
+ARLA_LIBEXEC	= arlad
+#NOINST_BIN	= afsdir_check dump_state play_disco
+NOINST_BIN	=
+
+MANPAGES	= \
+		AliasDB.5 \
+		CellServDB.5 \
+		DynRootDB.5 \
+		SuidCells.5 \
+		ThisCell.5 \
+		arla.conf.5 \
+		arlad.8 \
+		arla-cli.8
+
+DEFS		= @DEFS@ -DSYSCONFDIR=\"$(sysconfdir)\" \
+		  -DARLACACHEDIR=\"$(ARLACACHEDIR)\" \
+		  -DARLACONFFILE=\"$(ARLACONFFILE)\"
+
+SHELL		= /bin/sh
+
+CFLAGS		= @CFLAGS@
+LDFLAGS		= @LDFLAGS@
+CPPFLAGS	= @CPPFLAGS@
+
+ETAGS		= etags
+MAKEDEPEND	= makedepend
+AFSWSROOT	= /usr/afsws
+RXKADINC	= -I$(srcdir)/../rxkad
+INCLUDES	= -I$(srcdir)/.. \
+		  @KERNEL_INCLUDE@ \
+		  -I../include \
+		  -I$(top_builddir) \
+		  -I$(srcdir)/../include \
+		  -I$(srcdir)/../nnpfs/include \
+		  $(INC_sl) \
+		  -I../rxdef \
+		  -I$(srcdir)/../appl/lib \
+		  @INC_roken@ \
+		  $(RXKADINC)
+DEFINES		= -DDEBUG
+KRB_CFLAGS	= @KRB5_INC_FLAGS@ @KAFS_CPPFLAGS@
+REALCFLAGS	= $(INCLUDES) $(KRB_CFLAGS) $(DEFINES) $(CFLAGS) \
+		  @PLWP_INC_FLAGS@
+RXKADLIB	= @RXKAD_LIBS@
+KAFS_LIBS	= @AIX_EXTRA_KAFS@ @KAFS_LIBS@
+LIB_tgetent	= @LIB_tgetent@
+INC_sl		= @INC_sl@
+LIB_sl		= @LIB_sl@
+DEPEND_sl	= @DEPEND_sl@
+
+LIBS_common	= ../lib/bufdir/libbufdir.la \
+		  -L../rxdef -lrxdefclient -lrxcbserver \
+		  -L../rx -lrx -L../lwp \
+		  -llwp @PLWP_LIB_FLAGS@
+
+LIBS_common_post= ../lib/ko/libko.la ../util/libarlautil.la \
+		  ../lib/vers/libvers.la \
+		  ../rxgk/librxgkcm.la ../rxdef/libtoken.la \
+		   @LIB_roken@ $(RXKADLIB) $(KAFS_LIBS) @LIBS@
+
+LIBS_arla-cli	= $(LIBS_common) \
+		  $(LIB_sl) @LIB_readline@ -L../appl/lib -larlalib \
+		  $(LIBS_common_post)
+
+LIBS_arlad	= $(LIBS_common) \
+		  $(LIBS_common_post)
+
+LIBS_afsdir_check= $(LIBS_common) \
+		  $(LIBS_common_post)
+
+LIBS_dump_state	= $(LIBS_common_post)
+
+LIBS_play_disco	= $(LIBS_common_post)
+
+LIBS_ptest	= $(LIBS_common_post) -L../lwp -llwp @PLWP_LIB_FLAGS@
+
+
+LIBDEPENDS	= ../rxdef/librxdefclient.la ../rxdef/librxcbserver.la \
+		  ../rx/librx.la ../lwp/liblwp.a \
+		  ../util/libarlautil.la $(DEPEND_sl) \
+		  ../lib/ko/libko.la ../lib/bufdir/libbufdir.la
+
+KERNEL_SRCS	= @KERNEL_SRCS@
+PROGS		= $(ARLA_SBIN) $(ARLA_LIBEXEC) $(NOINST_BIN)
+
+SRCS		=				\
+		abuf.c				\
+		adir.c				\
+		afsdir_check.c			\
+		arla.c				\
+		arlad.c				\
+		arladeb.c			\
+		arladebu.c			\
+		blocks.c			\
+		cmcb.c				\
+		conn.c				\
+		cred.c				\
+		d-trans.c			\
+		disco.c				\
+		dump_state.c			\
+		dynroot.c			\
+		fcache.c			\
+		fprio.c				\
+		inter.c				\
+		kernel.c			\
+		messages.c			\
+		play_disco.c			\
+		poller.c			\
+		subr.c				\
+		state.c				\
+		stats.c				\
+		volcache.c			\
+		nnpfs.c				\
+		$(KERNEL_SRCS)
+
+HDRS		=				\
+		abuf.h				\
+		adir.h				\
+		afs_dir.h			\
+		arla_local.h			\
+		arladeb.h			\
+		cmcb.h				\
+		conn.h				\
+		cred.h				\
+		disco.h				\
+		dynroot.h			\
+		fcache.h			\
+		fprio.h				\
+		inter.h				\
+		kernel.h			\
+		messages.h			\
+		service.h			\
+		subr.h				\
+		state.h				\
+		stats.h				\
+		nnpfs.h				\
+		volcache.h		
+
+common_OBJS	=				\
+		abuf.o				\
+		adir.o				\
+		arla.o				\
+		arladeb.o			\
+		arladebu.o			\
+		blocks.o			\
+		cmcb.o				\
+		conn.o				\
+		cred.o				\
+		d-trans.o			\
+		disco.o				\
+		dynroot.o			\
+		fcache.o			\
+		fprio.o				\
+		inter.o				\
+		kernel.o			\
+		messages.o			\
+		poller.o			\
+		subr.o				\
+		state.o				\
+		stats.o				\
+		volcache.o			\
+		nnpfs.o				\
+		$(KERNEL_SRCS:.c=.o)
+
+arlad_OBJS	= $(common_OBJS)		\
+		arlad.o
+
+arla-cli_OBJS	= $(common_OBJS)		\
+		arla-cli.o			\
+		lsprint.o
+
+arla-fuse_OBJS	= $(common_OBJS)		\
+		arla-fuse.o
+
+afsdir_check_OBJS = afsdir_check.o
+
+dump_state_OBJS = dump_state.o state.o
+
+play_disco_OBJS = play_disco.o disco.o
+
+ptest_OBJS = ptest.o poller.o arladeb.o arladebu.o
+
+
+.PHONY: all install uninstall depend tags clean
+
+all:		$(PROGS)
+
+.c.o:
+		$(CC) -c $(CPPFLAGS) $(DEFS) -I$(srcdir) -I. $(REALCFLAGS) $<
+
+install: all
+		$(MKINSTALLDIRS) $(DESTDIR)$(sbindir)
+		PROG_SBIN='$(ARLA_SBIN)'; for x in $$PROG_SBIN; do \
+			f=`echo $$x | sed '$(transform)'`; \
+			$(INSTALL_PROGRAM) $$x $(DESTDIR)$(sbindir)/$$f; \
+		done ; \
+		$(MKINSTALLDIRS) $(DESTDIR)$(libexecdir) ; \
+		PROG_LIBEXEC='$(ARLA_LIBEXEC)'; for x in $$PROG_LIBEXEC; do \
+			f=`echo $$x | sed '$(transform)'`; \
+			$(INSTALL_PROGRAM) $$x $(DESTDIR)$(libexecdir)/$$f; \
+		done ; \
+		$(MKINSTALLDIRS) $(DESTDIR)$(mandir) ; \
+		MANPAGES='$(MANPAGES)'; for x in $$MANPAGES; do \
+			n=`echo $$x | sed 's/\(.*\)\.[1-9a-zA-Z]*$$/\1/'`; \
+			e=`echo $$x | sed 's/.*\.\([1-9a-zA-Z]*\)$$/\1/'`; \
+			f=`echo $$n | sed '$(transform)'`; \
+			$(MKINSTALLDIRS) $(DESTDIR)$(mandir)/man$$e ; \
+			$(INSTALL_DATA) $(srcdir)/$$x \
+				$(DESTDIR)$(mandir)/man$$e/$$f.$$e; \
+		done
+
+uninstall:
+		PROG_BIN='$(ARLA_BIN)'; for x in $$PROG_BIN; do \
+			f=`echo $$x | sed '$(transform)'`; \
+			rm -f $(DESTDIR)$(bindir)/$$f; \
+		done ; \
+		PROG_LIBEXEC='$(ARLA_LIBEXEC)'; for x in $$PROG_LIBEXEC; do \
+			f=`echo $$x | sed '$(transform)'`; \
+			rm -f $(DESTDIR)$(libexecdir)/$$f; \
+		done ; \
+		MANPAGES='$(MANPAGES)'; for x in $$MANPAGES; do \
+			n=`echo $$x | sed 's/\(.*\)\.[1-9a-zA-Z]*$$/\1/'`; \
+			e=`echo $$x | sed 's/.*\.\([1-9a-zA-Z]*\)$$/\1/'`; \
+			f=`echo $$n | sed '$(transform)'`; \
+			rm -rf $(DESTDIR)$(mandir)/$$f.$$e; \
+		done
+
+arlad:		$(arlad_OBJS) $(LIBDEPENDS)
+		$(top_builddir)/libtool --mode=link $(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(arlad_OBJS) $(LIBS_arlad)
+
+arla-cli:	$(arla-cli_OBJS) $(LIBDEPENDS)
+		$(top_builddir)/libtool --mode=link $(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(arla-cli_OBJS) $(LIBS_arla-cli)
+
+arla-fuse:	$(arla-fuse_OBJS) $(LIBDEPENDS)
+		$(top_builddir)/libtool --mode=link $(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(arla-fuse_OBJS) $(LIBS_arla-cli) -lfuse
+
+afsdir_check:	$(afsdir_check_OBJS)
+		$(top_builddir)/libtool --mode=link $(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(afsdir_check_OBJS) $(LIBS_afsdir_check)
+
+dump_state:	$(dump_state_OBJS)
+		$(top_builddir)/libtool --mode=link $(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(dump_state_OBJS) $(LIBS_dump_state)
+
+play_disco:	$(play_disco_OBJS)
+		$(top_builddir)/libtool --mode=link $(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(play_disco_OBJS) $(LIBS_play_disco)
+
+ptest:		$(ptest_OBJS)
+		$(top_builddir)/libtool --mode=link $(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(ptest_OBJS) $(LIBS_ptest)
+
+
+Makefile:	Makefile.in ../config.status
+		cd ..; CONFIG_FILES=arlad/Makefile CONFIG_HEADERS= $(SHELL) config.status
+
+depend:		$(SRCS)
+		$(MAKEDEPEND) -- $(REALCFLAGS) -- $^
+
+tags:		TAGS
+
+TAGS:		$(SRCS) $(HDRS)
+		$(ETAGS) -t $(SRCS) $(HDRS)
+
+clean		:
+		rm -f $(PROGS) $(OBJS) *~ *.o core *.core
+
+mostlyclean:	clean
+
+distclean:	clean
+		rm -f Makefile config.status
+
+realclean:	distclean
+		rm -f TAGS

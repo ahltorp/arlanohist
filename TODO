@@ -1,0 +1,102 @@
+
+  $Id: TODO,v 1.156 2005/04/02 14:14:49 lha Exp $
+
+
+	Release 0.36
+		Redhat kernel + syscall
+
+	Release 0.37:
+		Darwin 10.2
+			ubc
+			find fd/vnode leak (fhopen)
+		FreeBSD 4.5
+			ubc ?
+		OpenBSD 3.1 and NetBSD 1.5
+			dubble-buffer (X ?)
+		Linux 2.4
+			ubc
+			(sparc64)syscall table 64 vs 32 bits syscalls
+		Solaris 9
+			ubc
+
+TODO-list, in no particular order.
+
+Please mail arla-drinkers@stacken.kth.se if you want to work on
+any of these things so we don't do double work.
+
+Store fcache entries on a list on the appropriate volcache entry to
+make volume callbacks faster.
+
+split cred for !bsd to rd_cred and wr_cred 
+
+fix weirdness with fake mount points
+  installattr (token w/o data) (ls -l ; ls foo ; ls bar)
+
+write2: bsd
+
+fix usage of token between nnpfs and arla
+
+fix usage of open-token between nnpfs and arla
+
+fs flushall:
+-volume ?
+is this really good ?
+
+nnpfs/linux: 
+check that we DTRT wrt Documentation/filesystem/Locking.txt
+
+nnpfs/*: teach nnpfs to read AFS directories for readdir
+
+   merge in tol's code from winnt
+
+nnpfs/linux: check if we can hook into vm_operations/address_space to
+figure out when cache pages are dirty and need to flushed.
+
+   dubble buffer instead, look how its done on netbsd nnpfs
+
+*/Makefile.in: allow creation of shared libraries
+
+*/Makefile.in: homogenize
+
+arlad/nnpfs: implement advisory locking
+
+arlad: more improvements on writing in disconnected mode
+
+arlad: fallback to disconnected mode if networking is not working (possibly per cell)
+
+arlad: more consistency checks before recovering state
+
+arlad: remove unused stuff from FCacheEntry
+
+nnpfs/aix: figure out where the PAG should be stored
+
+nnpfs/irix: fix syscall and implement setgroups wrapper
+
+nnpfs/irix: port to Irix 6.5
+
+nnpfs/solaris: verify multithreadness, merge xnode and vnode mutex locks
+
+nnpfs/sunos: implement setgroups wrapper
+
+OPTIMIZATIONS
+
+This is a list of posible optimizations that could be done to different parts
+of arla.
+
+ - Delay reads and writes to cache and AFS-servers. Make the more operations
+   in one batch. (possible with rx?) Especially directories don't have to be
+   synced for every operation.
+
+ - send more messages to/from arlad in one sweep. (lookup on whole path in one
+   message, getattr+getdata, etc..)
+
+MILKO
+
+Filbunke, the nnp-class-server generation:
+- callbacks
+- logging
+- fsck/salvage, stability, more tests
+- SPEED, real i*op
+- volser (?)
+- pts,vldb
+- security

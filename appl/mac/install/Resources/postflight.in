@@ -1,0 +1,11 @@
+#!/bin/sh
+#
+# $Id: postflight.in,v 1.1 2007/01/12 16:09:13 tol Exp $
+#
+# postflight script for mac installer. create config files from defaults as needed.
+
+cd %ETCDIR%
+for i in %CONFFILES% ; do
+	test -f $i || cp $i.default $i
+done
+

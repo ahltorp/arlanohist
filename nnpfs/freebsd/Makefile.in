@@ -1,0 +1,47 @@
+#
+# $Id: Makefile.in,v 1.8 2006/04/03 16:21:50 tol Exp $
+#
+
+srcdir=@srcdir@
+prefix=@prefix@
+KERNBUILDDIR=@FBSDKERNBUILDDIR@
+SYSDIR=@SYS@
+BSDMAKE=@BSDMAKE@
+
+CLEANENV= env MAKEFLAGS= MFLAGS= LDFLAGS=
+
+
+SUBDIRS		= ../bsd/bin
+
+all:
+	$(CLEANENV) $(BSDMAKE) -f $(srcdir)/FreeBSD-Makefile SYSDIR=$(SYSDIR) $(FBSDKERNBUILDDIR) srcdir="$(srcdir)"
+	SUBDIRS='$(SUBDIRS)'; \
+	for i in $$SUBDIRS; \
+	do (cd $$i && $(MAKE) $(MFLAGS) $@); done
+
+install: all
+	$(CLEANENV) $(BSDMAKE) -f $(srcdir)/FreeBSD-Makefile SYSDIR=$(SYSDIR) $(KERNBUILDDIR) DESTDIR=$(prefix) KMODDIR=/bin srcdir="$(srcdir)" install
+	SUBDIRS='$(SUBDIRS)'; \
+	for i in $$SUBDIRS; \
+	do (cd $$i && $(MAKE) $(MFLAGS) $@); done
+
+clean:
+	$(CLEANENV) $(BSDMAKE) -f $(srcdir)/FreeBSD-Makefile SYSDIR=$(SYSDIR) $(KERNBUILDDIR) srcdir="$(srcdir)" clean
+	SUBDIRS='$(SUBDIRS)'; \
+	for i in $$SUBDIRS; \
+	do (cd $$i && $(MAKE) $(MFLAGS) $@); done
+
+check:
+
+mostlyclean: clean
+
+distclean: clean
+
+realclean: distclean
+
+mostlyclean distclean realclean:
+	SUBDIRS='$(SUBDIRS)'; \
+	for i in $$SUBDIRS; \
+	do (cd $$i && $(MAKE) $(MFLAGS) $@); done
+
+.PHONY: all load clean mostlyclean distclean realclean install uninstall

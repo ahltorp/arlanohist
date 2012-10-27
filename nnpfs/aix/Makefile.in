@@ -1,0 +1,108 @@
+# $Id: Makefile.in,v 1.6 2003/10/03 17:25:05 map Exp $
+
+SHELL		= /bin/sh
+
+srcdir		= @srcdir@
+top_builddir	= ../..
+VPATH		= @srcdir@
+
+CC		= @CC@
+#CC		= cc
+LD		= ld
+
+INSTALL		= @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA	= @INSTALL_DATA@
+MKINSTALLDIRS 	= @top_srcdir@/mkinstalldirs
+
+prefix 		= @prefix@
+exec_prefix	= @exec_prefix@
+libexecdir 	= @libexecdir@
+
+INCLUDES	= -I. -I$(srcdir) \
+		  -I../../include -I$(srcdir)/../../include \
+		  -I$(srcdir)/../include
+DEFS		= @DEFS@ -DDEBUG -D_KERNEL
+CFLAGS		= $(DEFS) $(INCLUDES) @CFLAGS@
+
+SRC		=				\
+		nnpfs_deb.c			\
+		nnpfs_common.c			\
+		nnpfs_dev.c			\
+		nnpfs_message.c			\
+		nnpfs_node.c			\
+		nnpfs_syscalls.c			\
+		nnpfs_vfsops.c			\
+		nnpfs_vnodeops.c			\
+		nnpfs_wrap.c
+
+OBJ 		= $(SRC:.c=.o)
+MOD 		= nnpfs
+PROGS		= nnpfs_load nnpfs_query nnpfs_unload
+
+SUBDIRS		= bin
+
+all: $(MOD) $(PROGS) all-subdirs
+
+all-subdirs:
+	for i in $(SUBDIRS); do \
+	(cd $$i && $(MAKE) all); \
+	done
+
+$(MOD): $(OBJ)
+	$(LD) -e nnpfs_entry -o $@ \
+	/lib/kernex.exp /lib/syscalls.exp $(srcdir)/foo.exp \
+	$(OBJ) \
+	-lcsys \
+	-bexport:$(srcdir)/nnpfs.exp
+
+nnpfs_load.o: nnpfs_load.c
+
+nnpfs_load: nnpfs_load.o
+	$(CC) -o $@ nnpfs_load.o
+
+nnpfs_unload.o: nnpfs_unload.c
+
+nnpfs_unload: nnpfs_unload.o
+	$(CC) -o $@ nnpfs_unload.o
+
+nnpfs_query.o: nnpfs_query.c
+
+nnpfs_query: nnpfs_query.o
+	$(CC) -o $@ nnpfs_query.o
+
+load:	nnpfs_load
+	./nnpfs_load $(MOD)
+
+query:	nnpfs_query
+	./nnpfs_query $(MOD)
+
+unload:	nnpfs_unload
+	./nnpfs_unload $(MOD)
+
+install: all install-subdirs
+	$(MKINSTALLDIRS) $(DESTDIR)$(libexecdir)
+	$(INSTALL_DATA) $(MOD) $(DESTDIR)$(libexecdir)/$(MOD)
+
+uninstall:
+	rm -f $(DESTDIR)$(libexecdir)/$(MOD)
+
+install-subdirs:
+	for i in $(SUBDIRS); do \
+	(cd $$i && $(MAKE) install); \
+	done
+
+distclean: clean
+
+clean:	clean-subdirs
+	rm -f $(MOD) $(PROGS) $(OBJ) *.o
+
+clean-subdirs:
+	for i in $(SUBDIRS); do \
+	(cd $$i && $(MAKE) clean); \
+	done
+
+TAGS:	$(SRC)
+	etags $(SRC)
+
+.PHONY: all all-subdirs load unload query install uninstall install-subdirs clean clean-subdirs

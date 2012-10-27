@@ -1,0 +1,119 @@
+# $Id: Makefile.in,v 1.7 2007/01/25 11:05:52 lha Exp $
+
+srcdir		= @srcdir@
+top_srcdir	= @top_srcdir@
+top_builddir	= ../../..
+VPATH		= @srcdir@
+
+CC		= @CC@
+LN_S		= @LN_S@
+
+INSTALL		= @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA	= @INSTALL_DATA@
+MKINSTALLDIRS 	= @top_srcdir@/mkinstalldirs
+
+prefix 		= @prefix@
+exec_prefix 	= @exec_prefix@
+libdir 		= @libdir@
+libexecdir 	= @libexecdir@
+bindir 		= @bindir@
+mandir		= @mandir@
+transform	= @program_transform_name@
+EXECSUFFIX	= @EXECSUFFIX@
+
+progdir		= $(bindir)/Afslog.app
+contentsdir	= $(progdir)/Contents
+macosdir	= $(contentsdir)/MacOS
+resourcesdir	= $(contentsdir)/Resources
+
+DEFS		= @DEFS@
+
+SHELL		= /bin/sh
+
+CFLAGS		= @CFLAGS@
+
+ETAGS		= etags
+MAKEDEPEND	= makedepend
+INCLUDES	= -I$(top_srcdir) \
+		  -I$(top_srcdir)/include \
+		  -I$(top_srcdir)/appl/lib \
+		  -I$(top_builddir)/rxdef \
+		  -I$(top_builddir)/include \
+		  -I. \
+		  @INC_roken@ \
+
+DEFINES		=
+REALCFLAGS	= $(INCLUDES) $(DEFINES) $(CFLAGS) @KAFS_CPPFLAGS@
+KERNEL_INCLUDE  = @KERNEL_INCLUDE@
+KAFS_LIBS	= @AIX_EXTRA_KAFS@ @KAFS_LIBS@
+
+# XXX this is somewhat a hack that is depend on krb5 lib, the problem
+# is that that autoconf test for libkrbafs doesn't check if krbafs
+# depends on krb5, but since this application uses krb5 I guess its ok
+# to have a explicit dependcy.
+
+LIBS		= -framework Cocoa \
+		  -L../../lib -larlalib \
+		  $(KAFS_LIBS) \
+		  @KRB5_LIB_FLAGS@ \
+		  @LIBS@
+
+LIBDEPENDS	= ../../lib/libarlalib.la
+
+PROGS		= afslog
+
+AFSLOG_SRCS    = main.m mafslog.m
+
+SRCS		= $(AFSLOG_SRCS)
+AFSLOG_OBJS	= $(AFSLOG_SRCS:.m=.o)
+
+all:		$(PROGS)
+
+.PHONY: all install uninstall depend tags clean
+
+.m.o:
+		$(CC) -c $(CPPFLAGS) $(DEFS) -I$(srcdir) -I. $(REALCFLAGS) $<
+
+install: all
+		$(MKINSTALLDIRS) $(DESTDIR)$(progdir)
+		$(MKINSTALLDIRS) $(DESTDIR)$(contentsdir)
+		$(MKINSTALLDIRS) $(DESTDIR)$(macosdir)
+		$(MKINSTALLDIRS) $(DESTDIR)$(resourcesdir)
+		$(MKINSTALLDIRS) $(DESTDIR)$(resourcesdir)/English.lproj/MainMenu.nib
+		$(INSTALL_PROGRAM) afslog $(DESTDIR)$(macosdir)
+		$(INSTALL_DATA) $(srcdir)/PkgInfo $(DESTDIR)$(contentsdir)
+		$(INSTALL_DATA) $(srcdir)/Info.plist $(DESTDIR)$(contentsdir)
+		$(INSTALL_DATA) $(srcdir)/English.lproj/InfoPlist.strings $(DESTDIR)$(resourcesdir)/English.lproj
+		$(INSTALL_DATA) $(srcdir)/English.lproj/MainMenu.nib/classes.nib $(DESTDIR)$(resourcesdir)/English.lproj/MainMenu.nib
+		$(INSTALL_DATA) $(srcdir)/English.lproj/MainMenu.nib/info.nib $(DESTDIR)$(resourcesdir)/English.lproj/MainMenu.nib
+		$(INSTALL_DATA) $(srcdir)/English.lproj/MainMenu.nib/objects.nib $(DESTDIR)$(resourcesdir)/English.lproj/MainMenu.nib
+
+
+uninstall:
+		rm -rf $(DESTDIR)$(progdir)
+
+afslog:		$(AFSLOG_OBJS) $(LIBDEPENDS)
+		../../../libtool --mode=link $(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(AFSLOG_OBJS) $(LIBS)
+
+Makefile:	Makefile.in ../../../config.status
+		cd ../../..; CONFIG_FILES=appl/mac/mafslog/Makefile CONFIG_HEADERS= $(SHELL) config.status
+
+depend:		$(CFILES)
+		$(MAKEDEPEND) -- $(REALCFLAGS) -- $^
+
+tags:		TAGS
+
+TAGS:		$(SRCS)
+		$(ETAGS) -t $(SRCS)
+
+clean		:
+		rm -f $(PROGS) $(OBJS) *~ *.o core
+
+mostlyclean:	clean
+
+distclean:	clean
+		rm -f Makefile
+
+realclean:	distclean
+		rm -f TAGS

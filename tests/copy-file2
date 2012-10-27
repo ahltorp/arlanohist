@@ -1,0 +1,12 @@
+#!/bin/sh
+# $Id: copy-file2,v 1.2 2005/10/28 14:33:40 tol Exp $
+cat > foo <<EOF
+hej tol
+
+ska vi g|ra r{tt nu.
+EOF
+
+cp foo foo2 || exit 1
+test -s foo2 || exit 1
+
+exit 0

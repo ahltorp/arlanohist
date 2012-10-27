@@ -1,0 +1,186 @@
+#!/bin/sh
+#
+# $Id: arla.init.in,v 1.16 2004/12/13 13:18:24 tol Exp $
+#
+# A simple SYSV startup script to start/stop arla for Linux
+# 
+# You must have a path that includes modprobe or insmod, mknod, 
+# chmod, mount and mkdir.
+#
+# * RedHat 
+#    1. Copy this file to /etc/rc.d/init.d
+#    2. Run:
+#        ``/sbin/chkconfig arla on/off''
+#        ``/sbin/service arla start''
+# * SuSE
+#    1. Copy this file to /sbin/init.d
+#    2. Configure with YaST
+# * Debian, Corel, and other, send in your stuff here.
+#    
+#
+#
+#
+# 
+# arla        Startup script for the Arla AFS client.
+# 
+# description: Arla - a free AFS implementation
+# chkconfig: 345 56 45
+# processname: arlad
+# config: %sysconfdir%/arlad.conf
+# pidfile: /var/run/arlad.pid
+#
+
+PATH="/sbin:/usr/sbin:/usr/bin:/bin"
+ARLABINDIR=%libexecdir%
+MODULEDIR=%bindir%
+CACHEDIR=%ARLACACHEDIR%
+SYSCONFDIR=%sysconfdir%
+export PATH
+
+run_program() {
+    if $*; then
+        :
+    else
+	echo "failed"
+	exit 1
+    fi
+}
+
+kill_arlad() {
+    if [ -f /var/run/arlad.pid ]; then
+	ARLAD_PID=`cat /var/run/arlad.pid`;
+	echo -n "Killing arlad... "
+	run_program kill -TERM $ARLAD_PID
+	sleep 3
+	if kill -0 $ARLAD_PID 2>/dev/null; then
+	    echo "arlad didn't die"
+	    exit 1
+	fi
+	echo "done"
+     else
+	echo "No /var/run/arlad.pid, arlad is not running"
+     fi
+}
+
+
+if [ ! -f $ARLABINDIR/arlad ]; then
+    exit 1
+fi
+
+if [ -f /etc/SuSE-release -a -f /etc/rc.config ]; then
+    . /etc/rc.config
+    if [ X"$START_ARLA" != "XYES" ]; then
+	exit 0
+    fi
+fi
+    
+case "$1" in
+
+    start)
+	# Check if there is a stale pid file
+	if [ -f /var/run/arlad.pid ]; then
+	    if kill -0 `cat /var/run/arlad.pid` 2> /dev/null; then
+		echo "arlad already running"
+		exit 1
+	    else
+		# Pid file was stale
+		rm -f /var/run/arlad.pid
+	    fi
+	fi
+
+	# Check if the file system for the cache is supported.
+	cachemountpoint=$CACHEDIR
+	while ! grep -q '^[^ ]* '$cachemountpoint' ' /proc/mounts; do
+	    cachemountpoint=$(dirname $cachemountpoint)
+	done
+	if ! grep -q '^[^ ]* '$cachemountpoint' ext[23] ' /proc/mounts; then
+	    echo "File system at $CACHEDIR must be of type ext2 or ext3."
+	    exit 1
+	fi
+
+	if [ ! -f $SYSCONFDIR/ThisCell ] || 
+	    fgrep -q cell.name $SYSCONFDIR/ThisCell ||
+	    ! fgrep -q '' $SYSCONFDIR/ThisCell; then
+	    echo "$SYSCONFDIR/ThisCell must contain the name of an AFS cell."
+	    echo "If you don't have a local cell you can use \"stacken.kth.se\"."
+	    exit 1
+        fi
+
+	# load nnpfs (if it's not already loaded)
+	if ! lsmod | grep "^nnpfs " >/dev/null; then
+	    NNPFS=nnpfs.ko
+	    case "`uname -r`" in
+		2.4*) NNPFS=nnpfs.o ;;
+	    esac
+	    echo -n "Loading nnpfs: "
+	    if ! modprobe -q nnpfs ; then
+		if (! [ -f $MODULEDIR/$NNPFS ]) || (! insmod $MODULEDIR/$NNPFS); then
+		    echo "Kernel module $NNPFS not found."
+		    exit 1
+		fi
+	    fi
+	    sleep 1
+	    echo done
+	fi
+	if [ ! -c /dev/nnpfs0 ] ; then
+	    echo Creating device /dev/nnpfs0
+	    rm -f /dev/nnpfs0
+	    mknod /dev/nnpfs0 c 103 0
+	    chmod 600 /dev/nnpfs0
+	fi
+	if [ ! -e $CACHEDIR ] ; then
+	    mkdir $CACHEDIR
+	    chmod 700 $CACHEDIR
+	    chown root $CACHEDIR
+	fi
+	if [ -f /etc/resolv.conf ]; then
+	    if ! cmp -s /etc/resolv.conf "${CACHEDIR}/etc/resolv.conf"; then
+		mkdir -p "${CACHEDIR}/etc"
+		cp -p /etc/resolv.conf "${CACHEDIR}/etc/resolv.conf"
+	    fi
+	fi
+	echo -n "Starting arlad: "
+	run_program $ARLABINDIR/arlad -z
+	echo "arlad"
+	if [ ! -d /afs ] ; then
+	    mkdir /afs
+	fi
+	sleep 3
+	echo -n "Mounting AFS filesystem: "
+	run_program mount -t nnpfs /dev/nnpfs0 /afs
+	echo "done"
+	;;
+    stop)
+	kill_arlad
+	echo -n "Unmounting AFS filesystem... "
+	run_program umount /afs
+	echo "done"
+	if lsmod | grep -q ^nnpfs ; then
+	    echo -n "Unloading nnpfs kernel module: "
+	    run_program rmmod nnpfs
+	    echo done
+	else
+	    echo "nnpfs not loaded"
+	fi
+	;;
+    restart)
+	kill_arlad
+	echo -n "Starting arlad: "
+	run_program $ARLABINDIR/arlad -z
+	echo "done"
+        ;;
+    status)	
+	if [ -f /var/run/arlad.pid ]; then
+	    if kill -0 `cat /var/run/arlad.pid` 2>/dev/null; then
+		echo "arlad is running"
+		exit 0
+	    fi
+	fi
+	echo "arla is NOT running"
+	;;
+    *)
+        echo "Usage: $0 {start|stop|restart|status}"
+        exit 1
+	;;
+esac
+

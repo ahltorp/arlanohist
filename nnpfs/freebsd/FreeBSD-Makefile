@@ -1,0 +1,50 @@
+#
+# $Id: FreeBSD-Makefile,v 1.8 2008/02/26 21:59:19 tol Exp $
+#
+
+KMOD=	nnpfs
+
+SRCS=	\
+	nnpfs_blocks.c \
+	nnpfs_common-bsd.c \
+	nnpfs_common.c \
+	nnpfs_deb.c \
+	nnpfs_dev-bsd.c \
+	nnpfs_dev-common.c \
+	nnpfs_dev-freebsd.c \
+	nnpfs_message.c \
+	nnpfs_node-bsd.c \
+	nnpfs_node.c \
+	nnpfs_syscalls-common.c \
+	nnpfs_syscalls-wrap-freebsd.c \
+	nnpfs_vfsops-bsd.c \
+	nnpfs_vfsops-common.c \
+	nnpfs_vfsops-freebsd.c \
+	nnpfs_vnodeops-bsd.c \
+	nnpfs_vnodeops-common.c \
+	nnpfs_vopdefs.h \
+	nnpfs_wrap-bsd.c \
+	vnode_if.h
+
+bsdsrcdir=	$(srcdir)/../bsd
+
+CFLAGS= -g \
+	-I${.CURDIR} \
+	-I${.CURDIR}/../../include \
+	-I${.CURDIR}/../include \
+	-I${bsdsrcdir} \
+	-I${bsdsrcdir}/../../include \
+	-I${bsdsrcdir}/../include \
+	-DHAVE_CONFIG_H \
+	-DNNPFS_DEBUG
+
+CLEANFILES=nnpfs_vopdefs.h
+
+.include <bsd.kmod.mk>
+
+.PATH:	$(bsdsrcdir)
+
+nnpfs_vopdefs.h: vnode_if.h
+	awk '/^struct vop_[a-z0-9]*_args/ { vop=substr($$2,5,length($$2)-9); printf("#define HAVE_VOP_%s 1\n", toupper(vop)); printf("NNPFS_VOP_DEF(%s);\n", vop); }' vnode_if.h > ${.TARGET}
+	-mkdir nnpfs
+	test -d nnpfs && ( test -f nnpfs/nnpfs_vopdefs.h || ln -s ../nnpfs_vopdefs.h nnpfs/nnpfs_vopdefs.h )

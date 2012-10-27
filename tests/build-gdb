@@ -1,0 +1,4 @@
+#!/bin/sh
+# $Id: build-gdb,v 1.13 2007/11/24 23:43:07 tol Exp $
+if test "X$FAST" != "X" ; then echo "Not running $0" >&4;  exit 0 ; fi
+$SHELL $SHELLVERBOSE $srcdir/generic-build $AFSROOT/stacken.kth.se/ftp/pub/gnu/gdb/gdb-6.7.1.tar.gz

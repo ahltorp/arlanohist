@@ -1,0 +1,717 @@
+2006-12-29  Tomas Olsson  <tol@it.su.se>
+
+	* lwp/*: fix PRE_Block types, add m88k and sh implementations.
+	From OpenBSD.
+
+	* doc/arla.texi: don't forget 2006 changes, add (C) Miodrag Vallat
+	and Theo de Raadt for lwp code from OpenBSD.
+
+	* lwp/plwp.c (LWP_DestroyProcess): when the thread routine
+	returns, underlying thread is implicitly cleaned up, so we don't
+	need to do it. Which for now saves us from the horrors of dynamic
+	library loading in chroot.
+
+2006-12-11  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/linux/nnpfs_vfsops.c (nnpfs_put_inode): don't clear STALE
+	flag before node is gone. use NNPFS_NODE_IPUT to avoid deadlock
+	when we remove dcache aliases
+
+	* nnpfs/linux/nnpfs_message.c (clear_all_children): remove <2.6.16
+	things
+	(nnpfs_force_invalid_node): don't clear data/tokens; the node is still
+	there. Try harder to remove dcache aliases.
+
+	* nnpfs/linux/nnpfs_inodeops.c (nnpfs_d_iput): add & use
+	(nnpfs_fsync_int): note if writeback failed
+	(*): remove <2.6.16 things
+
+	* nnpfs/linux/nnpfs_*.c: remove <2.6.16 things
+
+	* nnpfs/linux/nnpfs/nnpfs_node.h: add NNPFS_NODE_IPUT flag
+
+	* arlad/messages.c: keep track of stale and dirtied entries, set
+	debuginfo on getdata() too
+
+	* arlad/kernel.c (enqueue_messages): comment
+
+	* arlad/fcache.c: keep track of stale and dirtied entries, limit
+	appendquota so we won't run out of worker threads too fast
+
+	* arlad/fcache.h (FCacheEntry): add flags to keep track of stale
+	entries and failed saves
+
+2006-12-01  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/linux/bin/startarla.in: remove linux-2.4 things
+
+2006-11-22  Tomas Olsson  <tol@it.su.se>
+
+	* configure.in: block-TR2
+
+	* nnpfs/linux/nnpfs_inodeops.c: prepare for linux-2.6.19, cleanup
+
+2006-11-17  Tomas Olsson  <tol@it.su.se>
+
+	* doc/nnpfs.txt: remove NNPFS_MSG_WAKEUP_DATA, update
+	NNPFS_MSG_WAKEUP description
+
+	* nnpfs/bsd/nnpfs_vnodeops-macos.c: remove dead code
+
+	* nnpfs/freebsd/FreeBSD-Makefile: add nnpfs_blocks.c
+
+	* rxkad/rxkad_locl.h: include roken.h for strlcpy()
+
+	* rx/rxperf.c: include roken.h
+
+	* lib/ko/afs_uuid.c: include time.h
+
+	* arlad/volcache.c: restucture, be more careful with flags
+
+2006-11-13  Tomas Olsson  <tol@it.su.se>
+
+	* tests/{sha1sum.c,Makefile.in} add sha1sum, a simple sha1
+	checksum utility
+	
+	* nnpfs/dummer/{sha*,hash.h,Makefile.am} sha implementation moved
+	to libarlautil, use it from there instead
+	
+	* util/{sha*,Makefile.am} added sha1 implementation from heimdal
+	via nnpfs/dummer
+	
+	* rxkad/rxk_serv.c (decode_krb5_ticket): redo ticket time checks,
+	modern heimdal doesn't expose max_skew.
+
+	* appl/pts/pts.1 (*): mention '-host' flag
+
+	* appl/pts/pts.c (chown_cmd): reorder command arguments to match
+	code. Based on patch from Rasmus Kaj.
+
+2006-11-08  Tomas Olsson  <tol@it.su.se>
+
+	* lib/ko/{ko.h,vlmisc.c} (string_to_volumeid): added; conversion
+	of numeric volume "names"
+
+2006-11-07  Tomas Olsson  <tol@it.su.se>
+
+	* arlad/{messages.c,inter.*} implement cross cell rename
+
+	* arlad/cred.* (cred_ref): added; refence a known cred
+
+	* arlad/fcache.c (resolve_mp): take FCacheEntry *, no need for **
+
+	* tests/run-tests.in: add volcache-lookup
+
+	* tests/volcache-lookup: added; Do lots of parallel volume
+	lookups, exercising volcache
+
+2006-11-03  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/bsd/nnpfs_dev-common.c: vfs_busy takes two args in OpenBSD
+	4.0
+
+2006-11-02  Tomas Olsson  <tol@it.su.se>
+
+	* arlad/volcache.c: close volcacheentry reuse race, cleanup
+
+2006-10-31  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/bsd/*.c: make it compile on FreeBSD 5.x, use
+	nnpfs_assert()
+
+	* nnpfs/bsd/nnpfs/*.h: make it compile on FreeBSD 5.x, use
+	nnpfs_assert()
+
+	* tests/apwd.c: stupid ifdef to make it compile on linux 2.6.18.
+	update (C)
+
+	* nnpfs/linux/nnpfs_vfsops.c (nnpfs_read_inode): oops, prepare for
+	2.6.19
+
+	* nnpfs/linux/nnpfs_vfsops.c (nnpfs_get_sb,nnpfs_statfs): adapt to 2.6.18
+
+	* nnpfs/linux/nnpfs_load.c (nnpfs_get_sb): adapt to 2.6.18
+
+	* nnpfs/linux/nnpfs/nnpfs_locl.h adapt to 2.6.18	
+	
+	* nnpfs/linux/nnpfs_inodeops.c (nnpfs_flush): adapt to 2.6.18
+
+2006-10-24  Tomas Olsson  <tol@it.su.se>
+
+	* Merge block_branch: block based cache and various fixes, see
+	branch for details.
+
+2006-09-29  Tomas Olsson  <tol@it.su.se>
+
+	* arlad/fcache.c (write_data): make sure we get fresh data for
+	target node on copy
+
+2006-09-28  Tomas Olsson  <tol@it.su.se>
+
+	* arlad/inter.c (rename_remove_node): verify attributes once
+	before using them
+
+2006-09-26  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/linux/nnpfs_inodeops.c (nnpfs_rename): mark old dentry
+	invalid, it is magically transformed into the new one by vfs. We
+	can't be sure that the "new" node is the same.
+
+	* lib/bufdir/fdir.c: update (C).
+	(fdir_readdir): tweak index counting
+	(fdir_remove,is_page_empty): disable tail truncate of shrinking
+	directories for now, it upsets cp+rm workaround for EXDEV renames.
+
+2006-09-21  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/linux/nnpfs_inodeops.c (nnpfs_open{,_valid}): make sure we
+	get fresh data if we don't have proper aops
+
+2006-09-04  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* appl/perf/afsfsperf.c: Don't bother selecting source port for
+	rx, we don't need that.
+	
+2006-09-01  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/bsd/**/nnpfs_vfsops-bsd.* support NetBSD 3.99.22, from
+	Jonathan A. Kollasch
+
+2006-06-24  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* nnpfs/bsd/nnpfs_vnodeops-netbsd.c (nnpfs_netbsd_write): use
+	vfs_timestamp
+	
+2006-06-12  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* nnpfs/bsd:
+	- abstract struct ucred to nnpfs_kernel_cred
+	- remove support for non native fhopen/fhget
+	- support netbsd 3.99.21
+	- test compiled on mac os tiger (kauth, vmspace, timecounter)
+	- make setpag code conditional on HAVE_SETPAG
+
+	* arlad/fcache.c (fcache_fhopen): remove support for non-native
+	fhopen/fhget
+
+	* configure.in: check for kauth_cred_getuid and <sys/kauth.h>
+	
+2006-06-09  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/linux/nnpfs_inodeops.c (do_fsync): this name appears in
+	2.6.17 headers; rename it nnpfs_fsync_int()
+
+2006-06-08  Love Hörnquist Åstrand  <lha@it.su.se>
+	
+	* Release 0.43 branch, see branch arla-0-43-brach for changes.
+	
+2006-06-08  Tomas Olsson <tol@it.su.se>
+
+	* NEWS: Prepare for 0.43
+
+	* arlad/messages.c (aioc_setcacheparam): return EPERM when
+	appropriate
+
+	* nnpfs/linux/nnpfs_syscalls.c: disable 32-bit compat syscall
+	things, they don't compile
+
+	* nnpfs/bsd/nnpfs_message.c (nnpfs_message_installdata): more
+	quiet for now
+
+	* arlad/fcache.c (fcache_setvnodes): wake up node creation thread
+	when needed
+
+	* doc/nnpfs.txt: spelling
+
+	* doc/debugging.texi: spelling
+
+2006-06-05  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* appl/afstool/afstool.1: specifed -> specified, Jason McIntyre
+	
+2006-05-24  Tomas Olsson <tol@it.su.se>
+
+	* arlad/stats.h (stats*): support 64-bit file sizes
+
+	* arlad/stats.c: support 64-bit file sizes
+
+	* arlad/arla_local.h: make fetch_block_size uint64_t
+
+2006-05-04  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/linux/nnpfs_message.c (nnpfs_message_install{attr,data}):
+	log without KERN_EMERG on data w/o token
+
+2006-05-02  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/bsd/nnpfs_vnodeops-macos.c (nnpfs_setattr): let caller
+	know what fields we support
+
+2006-04-21  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/bsd/nnpfs_message.c (gc_vnode): use nnpfs_vprint()
+
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: Include sys/stdint.h if we have
+	it, for OpenBSD 3.9.  Only include sys/vnode.h once.  Add
+	nnpfs_vprint().
+
+	* configure.in: check for sys/stdint.h, needed by nnpfs on OpenBSD
+	3.9.  Order header checks alphabetically.
+
+	* nnpfs/bsd/bin/startarla.in: Do kldstat on systems that have it,
+	handy for debugging.  Use /dev/ksyms for modload, current OpenBSD
+	needs it when running from nonstandard kernel location.
+
+	* arlad/arla.c (initrx): try random port if the default is busy
+	update (C)
+
+2006-04-18  Tomas Olsson  <tol@it.su.se>
+
+	* NEWS: add 0.42
+
+2006-04-10  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* make-release: automagic tag detection
+
+	* Release 0.42 branch, see branch arla-0-42-brach for changes.
+	
+2006-04-10  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/bsd/nnpfs_vnodeops-bsd.c (nnpfs_pushdirty): if we don't
+	seem to have dirty pages, just return
+
+2006-04-06  Tomas Olsson  <tol@it.su.se>
+
+	* lib/vers/print_version.c: more correct copyright dates (1995-,
+	2006)
+
+	* configure.in: 0.42-RC3
+
+	* nnpfs/linux/nnpfs_syscalls.c: undef SYSCALLHACK if
+	CONFIG_DEBUG_RODATA is set, the combination is said to cause a
+	panic on modifying syscall table
+
+2006-04-04  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/linux/nnpfs_inodeops.c (nnpfs_readdir): compain if
+	d_reclen is zero. Remove unused 2.2.x code.
+
+	* nnpfs/linux/nnpfs_syscalls.c (sys_afs_int): don't call
+	smp_processor_id(), triggers BUG() when used "in preemptible code"
+
+	* nnpfs/linux/nnpfs_syscalls-lossage.c (get_start_addr): try to
+	cover 2.6.16 -- sys_call_table was moved
+
+	* nnpfs/linux/nnpfs_vfsops.c (nnpfs_read_super): move init of
+	node_sem, node_head, and nnodes to nnpfs_init_device() so we
+	survive daemon exits before mount.
+
+	* nnpfs/linux/nnpfs_dev.c (nnpfs_init_device): init node_sem,
+	node_head, nnodes. Moved from nnpfs_read_super() so we survive
+	daemon exits before mount.  update (C)
+
+2006-04-03  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/freebsd/Makefile.in: Pass SYSDIR to kld make
+
+	* configure.in: Pass SYSDIR to FreeBSD make used to get
+	KERNEL_CPPFLAGS
+
+	* nnpfs/bsd/nnpfs_vfsops-freebsd.c (nnpfs_make_dead_vnode): return
+	vnode locked.
+
+	* nnpfs/bsd/nnpfs_vfsops-freebsd.c: update (C), indent
+
+	* tests/large-dir2.c (creat_files): check that we unlink the
+	expected number of entries, too
+
+	* nnpfs/bsd/nnpfs_vnodeops-bsd.c (nnpfs_link): no need to unlock
+	vp on FreeBSD
+	(nnpfs_putpages): FreeBSD: lock the cache file before doing
+	VOP_PUTPAGES() on it
+
+	* tests/large-dir2.c (creat_files): EEXIST on create most likely
+	means we had a collision in the "random" name generation, just
+	retry.  update (C)
+
+2006-03-31  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/bsd/nnpfs_vnodeops-bsd.c: update (C)
+
+	* nnpfs/bsd/nnpfs_vnodeops-bsd.c (nnpfs_islocked): don't panic if
+	called after reclaim
+
+	* configure.in: default /usr/src/sys as SYS dir on all bsd:s
+	forget about kvm.h
+
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: rename nnpfs_msleep to
+	nnpfs_xsleep, let it take pointer as mtx
+	(nnpfs_xsleep): use ltsleep() on netbsd
+
+	* nnpfs/bsd/nnpfs_dev-common.c: rename nnpfs_msleep to
+	nnpfs_xsleep, let it take pointer as mtx
+	(nnpfs_xsleep): use ltsleep() on netbsd
+
+	* nnpfs/freebsd/FreeBSD-Makefile: remove some userland things
+
+	* util/mmaptime*: removed; not used, obsolete
+	
+	* include/Makefile.in: no mmaptime.h
+
+2006-03-30  Tomas Olsson  <tol@it.su.se>
+
+	* doc/partsofarla.texi: s/Xfs/NNPFS/
+
+	* doc/Makefile.in: drop themis.texi
+
+2006-03-29  Tomas Olsson  <tol@it.su.se>
+
+	* configure.in: 0.42-RC2
+
+	* tests/{Makefile,run-tests}.in: add mtime-file
+
+	* tests/mtime-file.c: added; make sure time isn't going backwards
+	during test. Detects a nnpfs problem caused by mtime updating
+	changes in linux-2.6.16.
+
+2006-03-28  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h (nnpfs_msleep): use msleep on
+	FreeBSD.  Update (C).
+
+	* nnpfs/bsd/nnpfs_dev-freebsd.c: Use default mutexes for
+	devlock. Enable devlock and don't use Giant. Update (C).
+
+2006-03-24  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/linux/nnpfs_inodeops.c (update_from_cache_node): since
+	2.6.16, linux generic writes update time stamps on the struct
+	file's inode, not the mapping's.
+
+2006-03-23  Tomas Olsson  <tol@it.su.se>
+
+	* configure.in: 0.42-RC1
+
+	* lib/ko/gensysname.c (generic_sysname): handle solaris
+	(arla_getsysname): simplify
+	(_arla_getsysname_hint): return -1 on error
+
+	* nnpfs/freebsd/Makefile.in: no need for krb5 includes in kernel
+
+2006-03-22  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/bsd/nnpfs_vnodeops-bsd.c (nnpfs_unlock): pointers look
+	better when printed in hex
+
+	* lib/ko/{ko_locl.h,*sysname*.c} (_arla_getsysname_hint): let
+	caller supply buffer
+	
+2006-03-21  Tomas Olsson  <tol@it.su.se>
+
+	* lib/ko/ko_locl.h (_arla_getsysname_hint): added
+
+	* lib/ko/Makefile.am: Include gensysname in libko instead of using
+	it standalone.  Build sysnametest
+
+	* lib/ko/sysnametest.c: added; simple sysname test program
+
+	* lib/ko/gensysname.c: Include gensysname in libko instead of
+	using it standalone.  Build sysnametest
+
+	* nnpfs/bsd/nnpfs_vfsops-netbsd.c (nnpfs_vfsops): check for
+	HAVE_STRUCT_VFSOPS_VFS_WASSYSCTL to work on 2.* and 3.*
+
+	* configure.in: check for vfsops.vfs_wassysctl, not vfs_sysctl. It
+	was renamed in NetBSD 2, and removed in 3.99.10 or so.
+
+2006-03-20  Tomas Olsson  <tol@it.su.se>
+
+	* arlad/inter.c (copy_remove_entry et al): handle hard links, try
+	rollback on error. Return EXDEV on cross cell renames for now.
+
+2006-03-16  Tomas Olsson  <tol@it.su.se>
+
+	* appl/fs/fs_local.h: no need for PRId64 today
+
+	* appl/fs/fs_getcache.c: use %lld etc instead of PRId64 for now,
+	hopefully works on obsd
+	
+	* tests/mmap-cat.c: slightly better argv handling
+
+	* tests/run-tests.in: add macos-getattrlist-leak
+
+	* tests/Makefile.in: build macos-getattrlist-leak
+	
+	* appl/mac/install/Arla: handle start/stop/restart wait for
+	network (hey, we do have it listed as a dependency!)
+
+2006-03-15  Tomas Olsson  <tol@it.su.se>
+
+	* appl/mac/Makefile.am: don't install make-mac-package.sh
+
+	* nnpfs/bsd/bin/Makefile.in: use CFLAGS when linking, for MacOS
+	universal binaries
+
+	* appl/mac/*/Makefile.in: use CFLAGS when linking, for MacOS
+	universal binaries
+
+	* lwp/Makefile.in (clean): clean universal binary intermediate
+	steps, too
+
+	* nnpfs/bsd/Makefile.in (doclean): clean universal binary
+	intermediate files, too
+
+	* appl/mac/make-mac-package.sh.in: rename installer Arla.pkg
+	(seems more standard) make including heimdal in package easier
+
+	* arlad/Makefile.in: use CFLAGS when linking, for MacOS universal
+	binaries
+
+	* appl/mac/Makefile.am: build make-mac-package.sh
+
+	* appl/mac/make-mac-package.sh.in: tag subst variables with %%
+
+	* configure.in: don't build make-mac-package.sh, we can do that
+	better where it lives
+
+	* appl/amon/Makefile.am: fix typo
+
+2006-03-14  Tomas Olsson  <tol@it.su.se>
+
+	* configure.in: always check for {err,warn}{,x} to keep rxperf
+	happy
+
+	* lwp/Makefile.in (process.o): for Mac OS X, build universal
+	binary when appropriate
+
+	* lwp/make-process.o.sh.in: take cpu type as argument, handle
+	"ppc" too
+
+	* lwp/make-process.o.sh.in: support darwin, sort HOST_OS cases
+
+	* lwp/process.i386.S: support darwin
+
+	* nnpfs/bsd/Makefile.in (nnpfs_mod.o): create a universal binary
+	when appropriate
+
+2006-03-13  Tomas Olsson  <tol@it.su.se>
+
+	* arlad/messages.c (afsstatus2afsstorestatus): enable for all
+	OS:es
+
+	* nnpfs/linux/nnpfs_inodeops.c (nnpfs_open): make sure we don't
+	loop forever update (C)
+
+	* nnpfs/linux/nnpfs_message.c (clear_all_children): adapt to
+	2.6.16
+	update (C)
+
+	* nnpfs/linux/nnpfs_common.c (nnpfs_print_children): adapt to
+	2.6.16
+	update (C)
+
+2006-03-10  Tomas Olsson  <tol@it.su.se>
+
+	* arlad/inter.c (copy_remove_entry et al): enable for non-Apple,
+	too. Update comments.
+
+	* arlad/messages.c (viocaccess): use cm_checkright() the new way
+
+	* arlad/inter.c (cm_checkright): return int, so we can say EROFS
+	when appropriate
+	(cm_access): unused; remove
+	(*): use cm_checkright() the new way
+
+	* arlad/inter.h (cm_checkright): return int
+	(cm_access): unused; remove
+
+2006-03-08  Tomas Olsson  <tol@it.su.se>
+
+	* arlad/messages.c (nnpfs_message_symlink): always update
+	directory in kernel, data may have changed (like we created a
+	mountpoint for a non-existent volume)
+
+2006-03-03  Tomas Olsson  <tol@it.su.se>
+
+	* arlad/messages.c (nnpfs_message_mkdir): set kernelp on child
+	entry when installing
+
+	* arlad/inter.c (cm_symlink): let NULL 'realfid' imply that
+	symlink entry should not get stamped with kernelp. Lets us freely
+	make symlinks without installing them.
+	(rename workaround): limit recursion depth, handle symlinks
+
+	* arlad/fcache.c (write_data): don't update entry length if we use
+	data from another node
+	(create_{file,directory}): don't set kernelp for child entry, it may
+	not get installed
+
+2006-02-28  Tomas Olsson  <tol@it.su.se>
+
+	* arlad/inter.c (rename_readdir_copy): get data before using it
+
+	* arlad/inter.c: basic copy+remove of directory trees
+
+2006-02-27  Tomas Olsson  <tol@it.su.se>
+
+	* tests/macos-getattrlist-leak.c: added; Regression test for
+	va_name buffer leak in MacOS X getattrlist(). See
+	nnpfs_vnodeops-macos.c:1.7
+
+2006-02-24  Tomas Olsson  <tol@it.su.se>
+
+	* arlad/inter.c (cm_close): call write_data() the new way
+	(copy_remove_file): added; for MacOS X, try to do copy+remove on EXDEV
+	rename. Finder doesn't try that by itself.
+	(cm_rename): upon EXDEV rename on MacOS, use copy_remove_file()
+	update (C)
+
+	* arlad/fcache.h (write_data): add arg data_entry
+
+	* arlad/fcache.c (write_data): add arg data_entry, to be used as
+	data source if present
+
+	* arlad/messages.c (afsstatus2afsstorestatus): added for Mac OS X
+
+	* arlad/messages.h (afsstatus2afsstorestatus): added
+
+2006-02-22  Tomas Olsson  <tol@it.su.se>
+
+	* appl/mac/make-mac-package.sh.in: try to get permissions right,
+	we've been too conservative
+
+2006-02-19  Rasmus Kaj <kaj@kth.se>
+
+	* arlad/arlad.8: Document the workers flag (and update manpage
+	dates).
+	
+2006-02-19  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* arlad/arla.conf.5: Document workers.
+
+	* arlad/arla.c: Allow setting workers in arla.conf
+
+2006-02-17  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* arlad/kernel.c (kernel_interface): indent debug printf
+
+2006-02-14  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/bsd/nnpfs_vnodeops-macos.c (nnpfs_getattr): restore some
+	vattr fields that we don't support, in case caller wants them back
+	unchanged
+
+2006-02-13  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* nnpfs/bsd/nnpfs_vnodeops-netbsd.c: UVM_ADV_NORMAL should be
+	conditioned on 3.99.13, from Ty Sarna
+	
+2006-02-07  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* tests/asu.c: Fix error message.
+
+	* tests/run-tests.in: Add write-error.
+
+	* tests/write-error.c: Check if the write to invalid pointer case
+	it working
+
+	* nnpfs/bsd/nnpfs_vnodeops-bsd.c: simplity the ifdefs, from Ty
+	Sarna
+
+	* nnpfs/bsd/nnpfs_vfsops-bsd.c: simplity the ifdefs, from Ty Sarna
+
+	* nnpfs/bsd/nnpfs_vnodeops-netbsd.c: simplity the ubc_alloc ifdef,
+	from Ty Sarna
+
+	* configure.in: Fix typo and make --with-smp work again, fix SMP
+	help text, From Ty Sarna
+	
+	* nnpfs/bsd/nnpfs/nnpfs_vfsops-bsd.h: Use
+	HAVE_THREE_ARGUMENT_FHTOVP for fhtovp, not
+	HAVE_STRUCT_VFSOPS_VFS_CHECKEXP.
+
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: Code for NetBSD 3.99.14, switch
+	too lwpfrom Ola Eriksson via pkgsrc-wip.
+	
+	* nnpfs/bsd/nnpfs_vnodeops-netbsd.c: Code for NetBSD 3.99.14,
+	switch too lwp, drop VOP_TRUNCATE and VOP_UPDATE, wrap kqueue,
+	from Ola Eriksson via pkgsrc-wip. XXX should be default for
+	earlier versions too.
+	
+	* nnpfs/bsd/nnpfs_vnodeops-bsd.c: Code for NetBSD 3.99.14, switch
+	too lwp, from Ola Eriksson via pkgsrc-wip.
+
+	* nnpfs/bsd/nnpfs_vfsops-netbsd.c: use d_thread_t, add wrapper for
+	vfs_sysctl.
+	
+	* nnpfs/bsd/nnpfs_vfsops-bsd.c: Code for NetBSD 3.99.14, switch to
+	lwp, from Ola Eriksson via pkgsrc-wip.  Use
+	HAVE_THREE_ARGUMENT_FHTOVP for fhtovp, not
+	HAVE_STRUCT_VFSOPS_VFS_CHECKEXP.
+	
+	* nnpfs/bsd/nnpfs_node-bsd.c: Code for NetBSD 3.99.14, switch to
+	lwp, not proc, from Ola Eriksson via pkgsrc-wip.
+
+	* nnpfs/bsd/nnpfs_dev-common.c: Code for NetBSD 3.99.14, new
+	signal handling, from Ola Eriksson via pkgsrc-wip
+
+	* configure.in: check for vfs_sysctl add test for argument to
+	fhtovp instead of cheating and useing test for vfs_checkexp that
+	longer works.
+	
+2006-02-07  Tomas Olsson  <tol@it.su.se>
+
+	* arlad/fprio.c: Improve speling, from alexey dobriyan
+
+2006-01-17  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/bsd/nnpfs_node-bsd.c (nnpfs_free_node): use vput on MacOS
+
+	* nnpfs/bsd/nnpfs_message.c (nnpfs_message_install{attr,data}):
+	more paranoia, more verbose logging
+	(nnpfs_message_invalidnode): clean up handling on MacOS
+
+	* nnpfs/bsd/nnpfs_vnodeops-macos.c: remove unused code
+
+2006-01-13  Tomas Olsson  <tol@it.su.se>
+
+	* arlad/fcache.c (truncate_file): free context on error
+
+	* arlad/messages.c (nnpfs_message_putattr): remove (partial)
+	StoreData workaround for ancient servers
+
+2006-01-10  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/linux/nnpfs/nnpfs_locl.h: move up linux/config.h in case
+	current.h needs it
+
+	* configure.in: remove smp test for linux, including
+	linux/config.h is probably enough
+
+	* nnpfs/linux/nnpfs_syscalls.c: no fh support for 2.6.15 and later
+
+	* nnpfs/linux/nnpfs_message.c (nnpfs_message_installdata): no fh
+	support for 2.6.15 and later
+
+2006-01-09  Tomas Olsson  <tol@it.su.se>
+
+	* HACKING: Add instructions on building auto* and libtool.
+
+2006-01-05  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/bsd/nnpfs_node-bsd.c (nnpfs_new_node): drop data tokens if
+	we have no data installed
+
+	* arlad/messages.c (update_fid,nnpfs_message_inactivenode): always
+	throw tokens when node is removed from kernel
+
+2006-01-03  Tomas Olsson  <tol@it.su.se>
+
+	* nnpfs/bsd/bin/umount_nnpfs.c (usage): use progname
+	(main): always use force on MacOS, fix handling otherwise
+
+	* nnpfs/bsd/nnpfs_vfsops-common.c (nnpfs_unmount_common): MacOS:
+	if daemon is alive, forced unmount is required. This is to stop
+	Finder from unmounting us upon logout.
+
+For older ChangeLog entries see ChangeLog.2005

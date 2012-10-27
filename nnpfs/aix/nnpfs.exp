@@ -1,0 +1,2 @@
+#!/unix
+nnpfs_pioctl SYSCALL

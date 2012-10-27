@@ -1,0 +1,15 @@
+#!/bin/sh
+# $Id: check-sysname,v 1.2 2003/01/27 12:55:12 lha Exp $
+FS=${FS:-${objdir}/../appl/fs/fs}
+
+s=`$FS sysname | cut -f2 -d\'`
+test "X$s" != X || exit 1
+mkdir $s || exit 1
+touch $s/1 || exit 1
+ln -s @sys a || exit 1
+test -f a/1 || exit 1
+mkdir kaka$s || exit 1
+touch kaka$s/2 || exit 1
+ln -s kaka@sys b || exit 1
+test -f b/2 || exit 1
+exit 0

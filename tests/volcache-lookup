@@ -1,0 +1,22 @@
+#!/bin/sh
+# $Id: volcache-lookup,v 1.1 2006/11/07 14:31:39 tol Exp $
+
+if test "X$FAST" != "X" ; then echo "Not running $0" >&4;  exit 0 ; fi
+
+#
+# Do lotsa volume lookups, exercising volcache
+#
+
+home_dir=$AFSROOT/su.se/home
+letters="a l m s t"
+
+for foo in $letters; do
+	for i in $home_dir/$foo/?; do ls -l $i >&4 2>&4; done >&4 2>&4 & >&4 2>&4
+	pid="$pid $!"
+done
+
+sleep 60
+
+for i in $pid ; do kill -KILL $i >&4 2>&4 ; done
+
+ls -ld $home_dir >&4 2>&4 || exit 1

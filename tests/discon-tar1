@@ -1,0 +1,9 @@
+#!/bin/sh
+# $Id: discon-tar1,v 1.7 2007/11/24 23:44:16 tol Exp $
+if test "X$FAST" != "X" ; then echo "Not running $0" >&4;  exit 0 ; fi
+FS=${FS:-${objdir}/../appl/fs/fs}
+TARBOLL=$AFSROOT/stacken.kth.se/ftp/pub/gnu/emacs/emacs-22.1.tar.gz
+file $TARBOLL >&4 || exit 1
+${FS} conn disconn
+gzip -dc $TARBOLL | tar xvf - >&4 || exit 1
+${FS} conn conn

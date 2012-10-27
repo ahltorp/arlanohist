@@ -1,0 +1,7 @@
+build.err
+build.log
+nnpfs_init.cod
+nnpfs_vops.cod
+nnpfs_deb.cod
+nnpfs_misc.cod
+obj

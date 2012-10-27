@@ -1,0 +1,58 @@
+#!/bin/sh
+
+# $Id: distributed1,v 1.1 2004/10/23 15:36:32 tol Exp $
+
+#use arla-cli to do some basic consistency checks with multiple clients
+
+CLI=${objdir}/../arlad/arla-cli
+CONF=${objdir}/../conf/arla.conf
+PWD=`pwd` #only works with /afs
+CP="$CLI -c $CONF put"
+
+
+#init
+echo -n foo > foo
+echo -n bar > bar
+echo -n baz > baz
+
+cat > check <<EOF
+#!/bin/sh
+A=\`cat bar\`
+echo bar is \$A
+test \$A = \$1 || exit 1
+EOF
+chmod +x check
+
+
+#basic consistency checks
+./check bar || exit 1
+
+$CP $PWD/foo $PWD/bar
+
+./check foo || exit 1
+
+
+#with local open for read
+tail -f bar &
+echo $! > tail.pid
+
+$CP $PWD/baz $PWD/bar
+
+./check foo || exit 1
+
+kill `cat tail.pid`
+
+./check baz || exit 1
+
+
+#with local open for write
+cat >> bar &
+echo $! > cat.pid
+
+$CP $PWD/foo $PWD/bar
+
+./check baz || exit 1
+
+kill `cat cat.pid`
+
+./check baz || exit 1

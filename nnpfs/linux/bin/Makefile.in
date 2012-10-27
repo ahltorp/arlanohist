@@ -1,0 +1,92 @@
+#	$Id: Makefile.in,v 1.28 2004/10/18 13:55:19 abo Exp $
+
+SHELL		= /bin/sh
+
+srcdir		= @srcdir@
+top_builddir	= ../../..
+VPATH		= @srcdir@
+
+CC		= @CC@
+RM		= rm
+
+INSTALL		= @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA	= @INSTALL_DATA@
+MKINSTALLDIRS 	= @top_srcdir@/mkinstalldirs
+
+prefix 		= @prefix@
+exec_prefix 	= @exec_prefix@
+libdir 		= @libdir@
+libexecdir 	= @libexecdir@
+sysconfdir	= @sysconfdir@
+bindir 		= @bindir@
+sbindir		= @sbindir@
+transform	= @program_transform_name@
+ARLACACHEDIR	= @ARLACACHEDIR@
+
+DEFS		= @DEFS@ -DDEBUG
+CFLAGS		= @CFLAGS@ 			\
+		  -I$(srcdir)/../../../include	\
+		  -I../../../include
+
+NNPFS_SBIN	= startarla
+INIT_BIN	= arla
+
+bin_PROGS	= mount_nnpfs
+
+all:		startarla arla $(bin_PROGS)
+
+.c.o:
+	$(CC) -c $(CPPFLAGS) $(DEFS) $(CFLAGS) $<
+
+clean:
+	$(RM) -f startarla mount_nnpfs arla *.o *~
+
+distclean: clean
+	$(RM) -f Makefile
+
+mount_nnpfs:	mount_nnpfs.o
+	$(top_builddir)/libtool --mode=link $(CC) -o $@ mount_nnpfs.o
+
+startarla: startarla.in
+	sed -e 's!%bindir%!$(bindir)!' -e 's!%libexecdir%!$(libexecdir)!' -e 's!%ARLACACHEDIR%!$(ARLACACHEDIR)!' $(srcdir)/startarla.in > $@
+	chmod +x $@
+
+arla: arla.init.in
+	sed -e 's!%bindir%!$(bindir)!' -e 's!%libexecdir%!$(libexecdir)!' -e 's!%ARLACACHEDIR%!$(ARLACACHEDIR)!' -e 's!%sysconfdir%!$(sysconfdir)!' $(srcdir)/arla.init.in > $@
+	chmod +x $@
+
+install: all
+	$(MKINSTALLDIRS) $(DESTDIR)$(sbindir)
+	PROG_SBIN='$(NNPFS_SBIN)'; for x in $$PROG_SBIN; do \
+	  f=`echo $$x | sed '$(transform)'`; \
+	  $(top_builddir)/libtool --mode=install $(INSTALL_PROGRAM) $$x $(DESTDIR)$(sbindir)/$$f; \
+	done
+	INIT_BIN='$(INIT_BIN)'; for x in $$INIT_BIN; do \
+	  f=`echo $$x | sed '$(transform)'`; \
+	  if test -d $(DESTDIR)/etc/rc.d/init.d -o -d /etc/rc.d/init.d ;then \
+            DIR=$(DESTDIR)/etc/rc.d/init.d ; \
+	  else \
+	    if test -d $(DESTDIR)/etc/init.d -o -d /etc/init.d ;then \
+              DIR=$(DESTDIR)/etc/init.d ; \
+	    else \
+              DIR=$(DESTDIR)/$(sysconfdir) ;\
+            fi ; \
+          fi ; \
+	  $(MKINSTALLDIRS) $$DIR ; \
+          if test ! -f $$DIR/$$f; then \
+	     $(INSTALL_PROGRAM) $$x $$DIR/$$f; \
+          fi ; \
+	  $(INSTALL_PROGRAM) $$x $$DIR/$$f.default; \
+	done
+
+uninstall:
+	PROG_SBIN='$(NNPFS_SBIN)'; for x in $$PROG_SBIN; do \
+	  f=`echo $$x | sed '$(transform)'`; \
+	  rm -f $(DESTDIR)$(sbindir)/$$f; \
+	done
+
+Makefile: Makefile.in ../../../config.status
+	cd ../../..; CONFIG_FILES=nnpfs/linux/bin/Makefile CONFIG_HEADERS= $(SHELL) config.status
+
+.PHONY: all install uninstall clean

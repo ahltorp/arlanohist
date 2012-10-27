@@ -1,0 +1,1807 @@
+2004-12-31 Harald Barth <haba@pdc.kth.se>
+
+	* configure.in: Improve wording in explanation
+
+	* appl/perf/afsfsperf.c: Add feature: Perftest uses largefile
+	support
+
+	* arlad/{arla.c,arla_local.h,arlad.8,arlad.c,fcache.c}: 
+	Make usage of O_LARGEFILE on cache files optional.
+
+	* nnpfs/linux/{nnpfs_inodeops.c,nnpfs_message.c}:
+	Use %lld (long long) types when printing error messages. Be aware:
+	This is Linux specific code and can only be used in this part.
+
+	* tests/{Makefile.in,write-6G-file.c}:
+	Test which writes a 6GB file with an additional "hej" at the end .
+
+2004-12-30  Love  <lha@stacken.kth.se>
+
+	* tests/read-past-eof.c: write 8G+1 in a portable
+
+	* ydr/output.c: make ydr_swap64 work
+	
+2004-12-29  Love  <lha@stacken.kth.se>
+
+	* arlad/messages.c (read_mount_point): fcache_open_file deals with
+	O_LARGEFILE
+
+	* arlad/fcache.c (fcache_open_file): pass O_LARGEFILE to
+	fcache_fhopen
+
+2004-12-27  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd: add macro NNPFS_MSG_WAKEUP_ERROR to avoid compile
+	warning, use it
+
+	* arlad/stats.c (stats_set_prefetch): make it work
+
+	* tests/read-past-eof.c: avoid reading of 2G limit, now that we
+	detect that its not going to possible for some fileservers
+
+	* arlad/fcache.c: Don't even bother writing/reading LARGEFILE
+	files to a non-LARGEFILE fileserver, instead return EFBIG. Because
+	it won't be want you ask for, you are going to be sad since you
+	you get to keep the first 2G of the file and not see/keep the end
+	of your family movie...
+
+2004-12-26  Love  <lha@stacken.kth.se>
+
+	* arlad/fcache.c: conn_get can't return a NULL connection, no need
+	to check for that; before using the connection to give back
+	callbacks, check if its dead; use the return code from
+	GiveUpCallBacks and set the connection to be dead if it appears to
+	be so
+	
+2004-12-26  Tomas Olsson  <tol@stacken.kth.se>
+
+	* arlad/messages.c (nnpfs_message_inactivenode): call
+	fcache_unused when kernel drops node, too. this now throws away
+	data for silly nodes
+
+	* arlad/fcache.c (throw_entry): no need to give up callbacks for
+	silly nodes
+	(fcache_unused): throw data for deleted nodes
+	(write_data): update length for silly nodes, too
+
+2004-12-25  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_vnodeops-bsd.c (nnpfs_pushdirty): lock
+	v_interlock, uvm object needs it
+
+2004-12-23  Tomas Olsson  <tol@stacken.kth.se>
+
+	* configure.in: remove lone esac left from osf stuff
+
+2004-12-23  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_vnodeops-netbsd.c: revert previous, I wasn't
+	thinking
+
+	* nnpfs/bsd/nnpfs_{common,dev,vfsops,vnodeops,wrap,node}-osf.c:
+	osf/1 is unsupported, remove files
+
+	* tests/read-past-eof.c: when truncating to LARGEFILE size, catch
+	errno's E2BIG (feature of fileserver) and EFBIG and ignore those
+	send verbose output to verbose fd.
+	
+2004-12-22  Love  <lha@stacken.kth.se>
+
+	* tests/read-past-eof.c: test both 2G-1 and 8G+1 ftruncate to 0
+	before close
+	
+	* arlad/bsd-subr.c: remove __osf__ stuff
+	
+	* configure.in: force large file support for linux, from Harald
+	Barth
+	
+	* tests/read-past-eof.c: use 8G+1, and O_LARGEFILE, from Harald
+	Barth
+
+	* nnpfs/linux/nnpfs_vfsops.c: fill in s_maxbytes in the superblock
+	to tell we support large files
+
+	* nnpfs/linux: use loff_t and add O_LARGEFILE when we open cache nodes
+
+	* nnpfs/bsd/Makefile.in: simplify makefile now then there isn't
+	any osf/1 support
+
+	* configure.in: define BIND_8_COMPAT for darwin,
+	remove osf/1 stuff
+	
+	* nnpfs/bsd: remove support for OSF/1
+
+	* nnpfs/bsd/nnpfs_vnodeops-netbsd.c: if we failed to write to the
+	underlaying node, ignore the issue
+
+	* nnpfs/bsd/nnpfs_node-bsd.c (nnpfs_getnewvnode): can sleep here,
+	make sure we don't race with a LIMBO node
+
+	* arlad/conn.h: add conn_{get,set}_fs_support64
+	
+	* arlad/conn.c: add conn_{get,set}_fs_support64
+	
+	* ydr/output.c: make constants ULL, this is unportable
+	
+	* ydr/output.c: return unsigned integer for ydr_swap64
+	
+	* ydr/output.c: less crap, hej mattias
+	
+	* arlad: Initial commit for large file support in arlad, mostly
+	based on Harald Barth <haba@pdc.kth.se> work. Additional changes
+	include going over the code and switching from size_t to
+	{u,}int64_t where it seemed appropriate. Add cache for 64bit
+	fileserver status in connection structure.
+
+	* ydr/output.c: fix endian for 64bits, as usual I got it all wrong
+	
+2004-12-20  Love  <lha@stacken.kth.se>
+
+	* appl/perf/afsfsperf.c (do_readfilecontent): handle reading
+	length correctly
+
+2004-12-19  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs/nnpfs_node.h: make offset an off_t
+	
+	* nnpfs/bsd/nnpfs_vnodeops-common.c: cast printing of xn->offset
+	to unsigned long
+
+	* nnpfs/bsd/nnpfs_vnodeops-common.c (nnpfs_data_valid): change
+	offset argument to off_t
+	(nnpfs_uio_end_length): change return value to off_t
+
+	* nnpfs/bsd/nnpfs/nnpfs_vnodeops.h (nnpfs_uio_end_length): change
+	return value to off_t
+
+	* nnpfs/bsd/nnpfs/nnpfs_vnodeops.h (nnpfs_data_valid): change
+	offset argument to off_t
+
+	* nnpfs/bsd/nnpfs_vnodeops-bsd.c: update (c), and add freebsd
+	kqueue stuff (untested)
+
+	* appl/perf/afsfsperf.c: spelling, make two of the test diffrent
+	
+	* appl/perf/afsfsperf.c: add haralds 64 bit patch with the
+	following modification: - add parameter that specifies if 64 bit
+	ops should be used - test writing file that is larger then 32bit -
+	catch the error of trying to write a >32 bit file to a 32bit
+	fileserver - catch the error from 32 bit store/fetch rpcs
+	
+	* rxdef/fs.xg: ydr needs more help the rxgen
+	
+	* rxdef/fs.xg: include FetchData64 and StoreData64 now that we
+	might handle them
+	
+	* ydr/output.c: le64toh crap
+	
+	* ydr/output.c: s/letoh64/le64toh/
+	
+	* nnpfs/include/nnpfs: switch to 64 bit filesizes, welcome to
+	version 19
+
+	* configure.in: remove unused htonl check
+	
+	* Arla 0.38 release, see branch
+
+	* lib/ko/resolve.c: use new bind8 style rr names to make libroken
+	update
+
+	* nnpfs/bsd/nnpfs_vfsops-bsd.c: variable "vnops" might be const
+	
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: variable "vnops" might be const
+	
+	* include/Makefile.in: provide check target, add --mode to libfool
+
+	* arlad/arla_local.h: provide symbol O_LARGEFILE if it doesn't
+	exists
+
+	* arlad/messages.c (nnpfs_message_inactivenode): use fcache_find,
+	that doesn't create the node under our feet, this fixes the assert
+	below in the code and exposes the bug more clearly, however, it
+	doesn't fix the underlaying issue.
+	
+2004-12-18  Love  <lha@stacken.kth.se>
+
+	* lib/bufdir/fbuf.h: use more off_t
+	
+	* lib/bufdir/fbuf.c: use more off_t
+	
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: include <sys/sa.h> if we have it
+	
+	* arlad/messages.c (break_callback): Ignore EISDIR for invalidnode
+	since that means that a message is on route to arlad to tell it
+	the node is on the way out from the cache.
+	
+	* nnpfs/bsd/nnpfs_message.c (nnpfs_message_invalidnode): dont
+	PANIC, return ENOENT if the node isn't found
+
+	* nnpfs/bsd/nnpfs_message.c (nnpfs_message_invalidnode): error
+	isn't used, don't pretend it is.
+
+2004-12-14  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_vfsops-common.c (nnpfs_mount_common_sys): use
+	nnpfs_thread_to_cred() w/ all modern fbsd's
+
+	* nnpfs/bsd/nnpfs_node-bsd.c (nnpfs_new_node): check for limbo
+	flag if node exists
+
+2004-12-13  Tomas Olsson  <tol@stacken.kth.se>
+
+	* rx/rx_user.h: removed rx_listenerPid
+
+	* nnpfs/linux/bin/arla.init.in (stop): for now, kill arlad before
+	umount
+
+	* nnpfs/linux/nnpfs/nnpfs_fs.h (print_nodes): removed
+
+	* nnpfs/linux/nnpfs_vfsops.c (print_nodes): removed, use
+	nnpfs_print_nodestats() instead
+
+	* nnpfs/linux/nnpfs_node.c (xn_purge): loop some more; some nodes
+	depend on nodes in other buckets
+	(nnpfs_print_nodestats): added
+
+	* nnpfs/linux/nnpfs_syscalls.c (nnpfs_debug_print): use
+	nnpfs_print_nodestats()
+
+	* nnpfs/linux/nnpfs/nnpfs_node.h: smaller hash size, added
+	XN_CLEANUP_ITERS for shutdown
+	(nnpfs_print_nodestats): added
+
+	* nnpfs/linux/nnpfs/nnpfs_dev.h add nnpfs_empty_inactive_queue
+
+	* nnpfs/linux/nnpfs_dev.c (nnpfs_empty_inactive_queue): static no
+	more
+	(nnpfs_devclose): place nodes in inactive queue before emptying it
+
+2004-12-09  Love  <lha@stacken.kth.se>
+
+	* configure.in: add more <sys/sa.h> if we have it
+	
+2004-12-06  Rasmus Kaj <kaj@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: When nnpfs_dev_t (which have a
+	special case for FreeBSD >= 50216) is used, there is no need for a
+	special version of nnpfs_{major|minor} for those versions of
+	FreeBSD.
+
+2004-12-06  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: unbreak conditional, s/#ifdef/if/
+	
+	* nnpfs/bsd/nnpfs_vnodeops-common.c: replace VN_KNOTE with
+	NNPFS_VN_KNOTE
+
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: add NNPFS_VN_KNOTE
+	
+2004-12-01  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_syscalls.c (nnpfs_find_first_vfsmount): added
+	(fhopen_call): use nnpfs_find_first_vfsmount, don't use put_filp
+
+	* nnpfs/linux/nnpfs_inodeops.c: adapt to linux-2.6.10rc2
+
+2004-11-28  Love  <lha@stacken.kth.se>
+
+	* rx/rx_user.c (rxi_GetICMPSocket): only complain if we are root
+	and we can't open icmp raw socket
+	
+	* configure.in: define _GNU_SOURCE
+	
+2004-11-27  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_dev-bsd.c (nnpfs_cdev): require giant for now,
+	not all vfs functions still not threadsafe
+
+2004-11-19  Love  <lha@stacken.kth.se>
+
+	* nnpfs_vnodeops-netbsd.c,nnpfs_vnodeops-common.c: add kqueue
+	suppport (untested), should work on netbsd and freebsd
+
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: add glue for VN_KNOTE
+	
+	* nnpfs/bsd/nnpfs_wrap-bsd.c: use nnpfs_{major,minor}
+	
+	* tests/build-gdb: gdb 6.3 is out
+	
+2004-11-18  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_vfsops-freebsd.c: nameidata was droped from omount
+
+	* rx: add icmp support, from Magnus, mangled by me
+
+	* rx/rx_misc.h: drop unused prototypes
+	
+	* nnpfs/bsd/nnpfs_vfsops-freebsd.c (nnpfs_root_freebsd): s/<p>/td/
+	
+2004-11-17  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_vfsops-common.c: try handling freebsd 5.3, from
+	Shun Suzuki <shun.suzuki@kek.jp>
+
+	* nnpfs/bsd/nnpfs_vfsops-freebsd.c : try handling freebsd 5.3,
+	from Shun Suzuki <shun.suzuki@kek.jp>
+
+	* nnpfs/bsd/nnpfs_node-bsd.c: try handling freebsd 5.3,
+	from Shun Suzuki <shun.suzuki@kek.jp>
+
+	* nnpfs/bsd/nnpfs_dev-bsd.c: try handling freebsd 5.3,
+	from Shun Suzuki <shun.suzuki@kek.jp>
+
+	* nnpfs/bsd/nnpfs_common-bsd.c: use nnpfs_{major,minor}
+
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: add add nnpfs_major nnpfs_minor
+
+	* switch to setprogname, from Shun Suzuki <shun.suzuki@kek.jp>
+
+2004-11-15  Love  <lha@stacken.kth.se>
+
+	* Arla 0.37 release, see branch
+	
+2004-10-25  Tomas Olsson  <tol@stacken.kth.se>
+
+	* appl/aafs/volume.c: update (C)
+
+	* appl/vos/vos_examine.c: update (C)
+
+2004-10-23  Tomas Olsson  <tol@stacken.kth.se>
+
+	* tests/distributed1: added; use arla-cli to do some basic
+	consistency checks with multiple clients.  currently not in
+	working condition
+
+	* appl/vos/vos_dump.c: take -time option, add more argument
+	handling
+
+2004-10-22  Ian Delahorne  <ian@stacken.kth.se>
+
+	* appl/vos/vos_unlock.c: Fixed typo.
+
+2004-10-22  Love  <lha@stacken.kth.se>
+
+	* configure.in: require autoconf 2.59, I can't test anything else
+	
+	* configure.in: stop bothering about automake version I wont test
+	(require >= 1.9)
+
+2004-10-18  Alexander Boström  <abo@stacken.kth.se>
+
+	* configure.in: add --disable-linux-group-pags
+
+	* nnpfs/linux/nnpfs_dev.c: set owner field in nnpfs_fops
+
+	* nnpfs/linux/nnpfs_syscalls.c: move PAG gid range above
+	0x80000000.
+
+	* nnpfs/linux/nnpfs_syscalls.c: reenable group based pags
+
+	* nnpfs/linux/bin/Makefile.in: look for init.d in /etc
+
+	* nnpfs/linux/bin/arla.init.in: update comments, use sysconfdir,
+	check fs type of cache dir, check for valid cell name in ThisCell,
+	clean up module load, create /etc in cache dir, kill arlad after
+	umount
+
+2004-10-08  Tomas Olsson  <tol@stacken.kth.se>
+
+	* appl/aafs/volume.c (aafs_volume_status_print): better type
+	handling
+
+	* appl/vos/vos_examine.c (print_volume): better type handling
+
+2004-09-22  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_vnodeops-bsd.c (nnpfs_symlink): openbsd wants
+	vput()
+
+2004-09-21  Ian Delahorne  <ian@stacken.kth.se>
+
+	* vos.8: Some updates due to mansaxel's whining :-)
+
+2004-09-18  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_inodeops.c (nnpfs_setattr): check return value
+	from inode_setattr(). From Alexander Boström <abo@kth.se>
+
+2004-09-15  Love  <lha@stacken.kth.se>
+
+	* arlad/arla.c: make fake_mp an configuration file option
+	
+2004-09-12  Love  <lha@stacken.kth.se>
+
+	* appl/lib/ka-procs.c: KASERVER_SUPPORT depend on
+	HAVE_KAFS_SETTOKEN_RXKAD
+
+2004-09-09  Tomas Olsson  <tol@stacken.kth.se>
+
+	* appl/fs/fs.1: misc fixes from OpenBSD via Jason McIntyre
+	<jmc@surf24-7.net>
+
+2004-09-09  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_vfsops-bsd.c: drop proc argument to fdplock for
+	openbsd 3.6, from Gabriel Kihlman
+
+	* nnpfs/bsd/nnpfs_message.c: use nnpfs_interlock_{,un}lock
+	
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: boolean algebra is hard
+	
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: OpenBSD still uses classic
+	interlocks with simplelocks
+
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: s/unun/un/
+	
+2004-09-08  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_vfsops-bsd.c: use nnpfs_interlock_{,un}lock
+	
+	* nnpfs/bsd/nnpfs_message.c: use nnpfs_interlock_{,un}lock
+	
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: glue for mutex interlocks
+	locking/unlocking
+
+2004-09-07  Tomas Olsson  <tol@stacken.kth.se>
+
+	* NEWS: better disco
+
+2004-09-06  Tomas Olsson  <tol@stacken.kth.se>
+
+	* NEWS: mention new libroken
+
+2004-08-29  Ian Delahorne  <ian@stacken.kth.se>
+
+	* arla.init.in: Porting changes from startarla.in for resolv.conf
+
+2004-08-29  lha  <lha@stacken.kth.se>
+
+	* startarla.in:
+	make sure we have a /etc/resolv.conf in the (chrooted cache directory)
+	to please new bind8.2 res_ninit that reads the file every time to init
+	struct __res_state
+
+2004-08-29  Love  <lha@stacken.kth.se>
+
+	* nnpfs/linux/bin/startarla.in: make sure we have a
+	/etc/resolv.conf in the (chrooted cache directory) to please new
+	bind8.2 res_ninit that reads the file every time to init struct
+	__res_state
+
+	* nnpfs/bsd/bin/startarla.in: make sure we have a
+	/etc/resolv.conf in the (chrooted cache directory) to please new
+	bind8.2 res_ninit that reads the file every time to init struct
+	__res_state
+
+2004-08-27  Love  <lha@stacken.kth.se>
+
+	* rxdef: add copyright and license
+
+2004-08-26  Tomas Olsson  <tol@stacken.kth.se>
+
+	* appl/fs/fs.1: fix typo. from f@orbiit.org via Jason McIntyre
+	<jmc@surf24-7.net>
+
+	* tools/gnats/send-pr.1: fix typo. from f@orbiit.org via Jason
+	McIntyre <jmc@surf24-7.net>
+
+2004-08-19  Tomas Olsson  <tol@stacken.kth.se>
+
+	* arlad/kernel.c (sub_thread): don't set busyp for the worker
+	(kernel_interface): set busyp for the worker to be woken
+
+2004-08-11  Love  <lha@stacken.kth.se>
+
+	* arlad/*.[ch]: use to lwp default stacksize
+
+	* lwp/plwp.c (LWP_CreateProcess): use default stacksize
+	
+2004-08-10  Tomas Olsson <tol@stacken.kth.se>
+
+	* tests/run-tests.in: find-and-cat-openbsd instead of -netbsd
+
+	* tests/find-and-cat-openbsd: added
+
+	* tests/find-and-cat-netbsd: removed
+	
+2004-08-10  Love  <lha@stacken.kth.se>
+
+	* configure.in: use HAVE_SCHED_YIELD
+	
+	* lwp/plwp.c: search for sched_yield
+	
+	* appl/lib/fs_lib.c: check for . and .. in last compnent and whine
+	in that case, just like openafs
+
+	* appl/perf/Makefile.am: afsfsperf need kerberos headers to get
+	des.h for kth libdes case
+
+2004-08-09  Richard Nyberg <rnyberg@it.su.se>
+
+	* nnpfs/bsd/nnpfs_message.c: separate cpp tests for DragonFly
+	and FreeBSD
+
+	* nnpfs/bsd/nnpfs_node-bsd.c: separate cpp tests for DragonFly
+	and FreeBSD
+
+	* nnpfs/bsd/nnpfs_syscalls-common.c: separate cpp tests for
+	DragonFly and FreeBSD
+
+	* nnpfs/bsd/nnpfs_vfsops-bsd.c: separate cpp tests for DragonFly
+	and FreeBSD
+
+	* nnpfs/bsd/nnpfs_vnodeops-bsd.c: separate cpp tests for
+	DragonFly and FreeBSD
+
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: separate cpp tests for DragonFly
+	and FreeBSD
+
+	* nnpfs/bsd/nnpfs/nnpfs_vfsops-bsd.h: separate cpp tests for
+	DragonFly and FreeBSD
+
+	* nnpfs/bsd/nnpfs_vnodeops-common.c: indentation
+
+2004-08-09  Love  <lha@stacken.kth.se>
+
+	* include/afssysdefs.h: heimdal 1.28
+	* include/afssysdefs.h: heimdal 1.27
+	
+2004-08-08  Love  <lha@stacken.kth.se>
+
+	* arlad/messages.c (get_mount_point): avoid deadlock when we are
+	looking up ourself Bug report from: Tracy Di Marco White
+	<gendalia@gendalia.org>
+
+2004-08-07  Tomas Olsson  <tol@stacken.kth.se>
+
+	* cf, lib/roken: import roken from heimdal-0.6.2
+	
+	* arlad/nnpfs.c: update (C), indent
+
+2004-07-29  Love  <lha@stacken.kth.se>
+
+	* arlad/conn.c (conn_rxkad_level): set to rxkad_crypt, its set to
+	this later, but what the heck, unconfuse me
+	
+	* rxkad/rxk_serv.c: less cut and paste errors
+	
+2004-07-27  Love  <lha@stacken.kth.se>
+
+	* appl/lib/ka-procs.c: depend ka support on openssl 0.9.7 and
+	later
+
+2004-07-23  Love  <lha@stacken.kth.se>
+
+	* Makefile.am.common: removes the multiple defined .x.c: rule,
+	already in cf/Makefile.am.common
+	From: Björn Torkelsson <torkel@acc.umu.se>
+	
+	* nnpfs/linux/bin/Makefile.in: more libtool fixes, partly from
+	Björn Torkelsson <torkel@acc.umu.se>
+
+2004-07-22  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs/nnpfs_fs.h (VFS_SET_NNPFS): case lvalue to void *
+	to fool all caddr_t-loving OS-es
+	
+	* nnpfs/bsd/nnpfs/nnpfs_fs.h: define VFS_SET_NNPFS
+	
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: less dragonfly
+	
+	* nnpfs/bsd/nnpfs_vfsops-common.c: use VFS_SET_NNPFS
+	
+2004-07-21  Tomas Olsson  <tol@razorbill.pdc.kth.se>
+
+	* nnpfs/linux/nnpfs/nnpfs_locl.h: always include
+	linux/devfs_fs_kernel.h
+
+	* configure.in: removed linux/devfs_fs_kernel.h test
+
+	* nnpfs/linux/Makefile.in: add and use MODULE_DIR for
+	modules_install.  From Björn Torkelsson
+	<Bjorn.Torkelsson@hpc2n.umu.se>, Debian bug #260311
+
+2004-07-21  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: more DragonFly for thread macros;
+	From Richard Nyberg <rnyberg@it.su.se>
+
+	* nnpfs/bsd/nnpfs_vnodeops-bsd.c: convert vnode to xnode; From
+	Richard Nyberg <rnyberg@it.su.se>
+	(DragonFly only)
+
+	* nnpfs/bsd/nnpfs_vfsops-common.c: improve cpp-logic; From
+	Richard Nyberg <rnyberg@it.su.se>
+
+	* nnpfs/bsd/nnpfs_vfsops-bsd.c: more dragonfly patches; From
+	Richard Nyberg <rnyberg@it.su.se>
+
+2004-07-20  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_syscalls.c: define nnpfs_sec_registered for
+	CONFIG_SECURITY, too
+
+2004-07-20  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_vfsops-freebsd.c (nnpfs_dead_vnodeop_entries):
+	use vop_std*lock* even though we don't need that since the
+	vop_no*lock* was removed in freebsd post-5.2
+	
+	* configure.in: look for findcdev in kernel
+	
+	* nnpfs/bsd/nnpfs_vfsops-common.c: use findcdev for VA_RDEV_TO_DEV
+	if we can find it
+
+	* nnpfs/bsd/nnpfs_wrap-bsd.c (make_devices,destroy_devices): save
+	device number/pointer to later when they needs to be removed
+	
+	* nnpfs/bsd/nnpfs_dev-bsd.c: unbreak previous commit
+	
+	* nnpfs/bsd: provide nnpfs_dev_t that is OSI,
+	Idea from Rasmus Kaj <kaj@kth.se>
+
+	* nnpfs/bsd/nnpfs_vnodeops-bsd.c: add dragonfly getpages, should
+	match freebsd[45] too partly from: Richard Nyberg <rnyberg@it.su.se>
+
+	* nnpfs/bsd/nnpfs/nnpfs_vfsops-bsd.h: add dragonfly, From: Richard
+	Nyberg <rnyberg@it.su.se>
+	
+	* nnpfs/bsd/nnpfs_wrap-bsd.c: add dragonfly, From: Richard Nyberg
+	<rnyberg@it.su.se>
+
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: add dragonfly, From: Richard
+	Nyberg <rnyberg@it.su.se>
+	
+	* nnpfs/bsd/nnpfs_vnodeops-bsd.c: add dragonfly, From: Richard
+	Nyberg <rnyberg@it.su.se>
+
+	* nnpfs/bsd/nnpfs_syscalls-wrap-dragonfly.c: add dragonfly, From:
+	Richard Nyberg <rnyberg@it.su.se>
+
+	* nnpfs/bsd/nnpfs_message.c: add dragonfly, From: Richard Nyberg
+	<rnyberg@it.su.se>
+
+	* nnpfs/bsd/nnpfs_dev-common.c: add dragonfly, From: Richard
+	Nyberg <rnyberg@it.su.se>
+
+	* nnpfs/bsd/nnpfs_dev-bsd.c: add dragonfly, From: Richard Nyberg
+	<rnyberg@it.su.se>
+
+	* lib/ko/gensysname.c: add dragonfly, From: Richard Nyberg
+	<rnyberg@it.su.se>
+
+	* configure.in: add dragonfly, From: Richard Nyberg
+	<rnyberg@it.su.se>
+
+2004-07-19  Tomas Olsson  <tol@stacken.kth.se>
+
+	* lib/ko/gensysname.c: update(C), add solaris 2.9
+
+	* lib/ko/gensysname.c: generalize linux sysname generation
+
+	* arlad/arla-cli.c (arla_{mkdir,rmdir}): allow implicit dir
+	
+	* arlad/arla-cli.c (arla_{mkdir,rmdir,rm}): don't exit on common
+	errors
+
+	* arlad/messages.h: add {get,set}_connmode(), update (C)
+
+	* arlad/arla-cli.c: update (C)
+
+	* arlad/arla-cli.c: (arla_connect): added
+	
+	* arlad/arla.c: update (C)
+
+	* arlad/arla.c: (arla_init): open disco log if not fully connected
+	
+	* arlad/messages.c: update (C)
+
+	* arlad/messages.c: ({get,set}_connmode): added
+	(viocconnect): use {get,set}_connmode
+	
+	* arlad/fcache.h: add fcache_discard_attrs, update (C)
+	
+	* arlad/fcache.c: update (C)
+	
+	* arlad/fcache.c: ({fcache_,}giveup_all_callbacks): don't drop attrs
+	(fcache_discard_attrs): added
+	(do_read_data): return ENETDOWN only for fully disconnected mode
+	
+2004-07-16  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs/nnpfs_node.h: dragonfly uses a lockf struct
+	directly since they have spilt lockf and lockf_range so they can
+	to resource limitations
+
+	* nnpfs/bsd/nnpfs_vnodeops-bsd.c: indent diffrently to unconfuse
+	emacs try to make advlock work on openbsd
+	
+2004-07-15  Love  <lha@stacken.kth.se>
+
+	* appl/vos/vos_rename.c: un-c99-ify
+	
+	* rxdef/volumeserver.xg: add comments to attchment flags
+	
+2004-07-15  Ian Delahorne  <ian@stacken.kth.se>
+
+	* appl/vos/vos_rename.c, appl/vos/vos.c, 
+	  appl/vos/vos_local.h, appl/vos/Makefile.am:
+
+	Added vos rename
+
+2004-07-14  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_vnodeops-netbsd.c (nnpfs_netbsd_write): fix vp
+	may be used uninitialized From: Lex Wennmacher
+	<lex@wennmacher.org>
+	
+2004-07-12  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_syscalls.c: always define nnpfs_sec_registered
+
+	* nnpfs/linux/nnpfs_syscalls-lossage.c (verify): no more sys_chdir
+	for 2.4
+
+	* appl/afstool/Makefile.am: use PLWP_LIB_FLAGS
+
+	* appl/pts/Makefile.am: use PLWP_LIB_FLAGS
+
+2004-07-12  Love  <lha@stacken.kth.se>
+
+	* configure.in: reverse condition in X11 test
+	
+	* appl/Makefile.am: correctly depend on X11
+	
+	* configure.in: automakify X11 test
+	
+2004-07-12  Alexander Bostrom  <abo@kth.se>
+
+	* configure.in: Fix the default for the linux syscall flag.
+
+2004-07-10  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_syscalls-wrap-bsd.c (try_install_syscall):
+	special case openbsd some more
+
+2004-07-09  Tomas Olsson  <tol@stacken.kth.se>
+
+	* appl/lib/ka-procs.c (get_password): use UI_UTIL_read_pw_string
+
+2004-07-09  Love  <lha@stacken.kth.se>
+
+	* arlad/*subr*.c: clean dirent buffer between rounds to unconfuse
+	people that (horror) read the raw file, prompted by cottage cheese
+	crowd
+
+	* arlad/Makefile.in: wrap INSTALL_PROGRAM with libfool
+	
+	* HACKING: --copy --force to libtoolize
+	
+	* rxkad/rxk_serv.c (server_CreateChallenge): handle the non
+	libcrypto case too
+	
+2004-07-09  Alexander Bostrom  <abo@kth.se>
+
+	* configure.in: Make syscall table modification optional on Linux.
+
+	* nnpfs/linux/nnpfs_syscalls.c: Make syscall table modification
+	optional.
+
+	* nnpfs/linux/nnpfs_syscalls.c: Only declare nnpfs_sec_registered
+	if it's used.
+
+2004-07-06  Tomas Olsson  <tol@stacken.kth.se>
+
+	* lib/ko/uae.c (uae_set): better arithmetic, more paranoia
+
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: include sys/pool.h
+
+	* configure.in: check for sys/pool.h
+
+2004-07-05  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_vfsops-bsd.c (nnpfs_fhopen): more fdp fixes
+	
+	* nnpfs/bsd/nnpfs_common-bsd.c: s/_CRED/_UCRED/
+	
+2004-07-04  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_common-bsd.c: use suser_ucred
+	
+	* configure.in: check for suser_ucred
+	
+	* nnpfs/bsd/nnpfs_dev-bsd.c: OpenBSD 3.5 uses poll for devices
+	
+	* nnpfs/bsd/nnpfs_dev-bsd.c (nnpfs_devpoll): check for POLLIN,
+	From Gabriel Kihlman
+
+	* nnpfs/bsd/nnpfs_vfsops-bsd.c: Maybe fix openbsd 3.5, prompted by
+	Gabriel Kihlman XXX this code should go out the airlock, its no
+	longer used on sane platforms and insane platforms deserve the
+	performance hit not having a fhlookup/fhopen
+	
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: openbsd 3.5 uses a pool for name
+	component string, but doesn't provide a PNBUF_PUT macro.
+	
+2004-07-04  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs/nnpfs_node.h: s/nnfs_init_head/nnpfs_init_head/
+
+	* nnpfs/bsd/nnpfs_{node,vfsops-common}.c:
+	s/nnfs_init_head/nnpfs_init_head/
+
+2004-07-02  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs/nnpfs_syscalls.h: no need to check for
+	sys_call_table
+
+	* nnpfs/linux/nnpfs_syscalls.c (*): use nnpfs_syscall_table
+
+	* nnpfs/linux/nnpfs_syscalls-lossage.c: use weak references
+
+
+	* nnpfs/linux/Makefile.in: use version.h, not Makefile, to find
+	kernel release
+
+	* nnpfs/linux/nnpfs_syscalls-lossage.c: x86_64 support
+
+2004-06-30  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_syscalls.c (nnpfs_sec*): more casting
+	(nnpfs_{init,exit}_procfs): drop __init, __exit for now
+
+2004-06-29  Love  <lha@stacken.kth.se>
+
+	* Release 0.36.2, see branch for changes
+
+2004-06-29  Love  <lha@stacken.kth.se>
+
+	* nnpfs/linux/Makefile.in: add -fno-strict-aliasing
+	
+2004-06-28  Tomas Olsson  <tol@stacken.kth.se>
+
+	* appl/lib/ka-procs.c (*): use modern DES* functions
+
+2004-06-28  Love  <lha@stacken.kth.se>
+
+	* appl/lib/ka-procs.c: drop <des.h>
+	
+2004-06-27  Ian Delahorne  <ian@stacken.kth.se>
+
+	* ka-procs.h: Needs atypes.h for uint32_t
+
+2004-06-27  Love  <lha@stacken.kth.se>
+
+	* appl/bos/Makefile.am: use .la not -L include common header file
+	
+	* appl/pts/Makefile.am: use .la not .a
+	
+	* appl/afstool/Makefile.am: use .la not .a
+	
+	* appl/afsutil/Makefile.am: use .la not .a
+	
+	* appl/kalog: automakeify
+
+	* appl/lib/Makefile.am: clean
+	
+	* appl/lib/ka-procs.c: provide symbol to turn on kaserver support
+	
+	* appl/lib/ka-procs.c: deexport all unused functions
+	
+	* appl/lib/ka-procs.h: deexport all unused functions
+	
+	* appl/lib/ka-procs.c: don't include <krb5.h>
+	
+	* appl/lib/ka-procs.h: make session key a byte array
+
+2004-06-27  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_syscalls-lossage.c: lower lower_bound
+
+2004-06-27  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_syscalls-wrap-freebsd.c: sprinkel register_t
+	
+	* HACKING: more make files, sort
+	
+	* appl/amon/Makefile.am: better (?) LDADD
+	
+	* appl/lib/Makefile.{am,in}: automakeify
+	
+	* appl/perf/Makefile.{am,in}: automakeify
+
+2004-06-26  Love  <lha@stacken.kth.se>
+
+	* rx/Makefile.am: use .la, not .a
+	
+	* arlad/Makefile.in: drop -DRXDEBUG
+	
+	* arlad/messages.c: rx_PrintStats is always defined now, just use
+	it
+
+	* rx/Makefile.am: rxdebug depends on librx.la
+	
+	* rx/rx.[ch]: always define rx_Print debug functions
+
+2004-06-26  Tomas Olsson  <tol@stacken.kth.se>
+
+	* appl/kalog/Makefile.in: use KRB5_INC_FLAGS
+
+	* appl/kalog/kalog.c: krb5 support
+
+	* appl/lib/ka-procs.[ch]: krb5 support
+
+	* appl/bos/Makefile.in: removed
+
+	* appl/*/Makefile.{in,am}: use librx.la
+
+	* milko/*/Makefile.in: use librx.la
+
+	* arlad/Makefile.in: use librx.la
+	
+2004-06-24  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_syscalls-lossage.c: check some more
+	
+	* HACKING: automake rx
+
+2004-06-24  Love  <lha@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_syscalls.c: move proc installation before
+	returning because there is no syscall table, this way we always
+	install proc
+
+	* rx/rx_dumptrace.c: define RXDEBUG, XXX fix abi
+	
+	* rx/rx.h: move debug statments to later, XXX fix abi
+	
+	* rx/Makefile.{am,in}: convert to automake
+
+2004-06-23  Tomas Olsson  <tol@stacken.kth.se>
+
+	* conf/CellServDB: removed dynarc.se
+
+	* nnpfs/linux/nnpfs_syscalls.c (nnpfs_{init,exit}_procfs): use the
+	right names
+
+2004-06-22  Love  <lha@stacken.kth.se>
+
+	* appl/{amon,bos,fs,pts},HACKING: automakify
+
+	* nnpfs/linux/nnpfs_syscalls.c: create the nnpfs node in /proc/fs,
+	use unsigned long instead of long, name the node afs_ioctl
+	
+2004-06-21  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_syscalls.c (*): procfs interface attempt
+
+	* nnpfs/linux/nnpfs_syscalls-lossage.c
+	(nnpfs_fixup_syscall_lossage): slightly safer checks
+
+	* nnpfs/linux/nnpfs_syscalls-lossage.c: find table on modern
+	fedora, too
+
+	* nnpfs/linux/nnpfs_syscalls.c: register as LSM and use security
+	field for PAG storage, if possible
+
+2004-06-20  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs/nnpfs_locl.h: syscalls return long
+	* nnpfs/linux/nnpfs_syscalls.c: syscalls return long
+
+2004-06-19  Love  <lha@stacken.kth.se>
+
+	* doc/timeline.texi: correct spelling of my name
+	
+2004-06-17  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_syscalls.c: sys_setgroups_function is
+	asmlinkage long
+
+2004-06-17  Love  <lha@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_syscalls-lossage.c: change ptr cast to
+	unsigned long
+	
+	* nnpfs/linux/nnpfs_syscalls.c: remove UL from constants
+	
+2004-06-16  Love  <lha@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_syscalls.c: make NNPFS_PAG_ULIM slightly
+	smaller to not fall on the signed (and rather sharp) edge
+	
+	* nnpfs/linux/nnpfs_syscalls-lossage.c: linux/kallsyms.h is a
+	2.5-ism linux/syscall.h doesn't seem to exists at all in
+	2.4.<modern-n> linux/syscalls.h doesn't exists for all platforms
+	in 2.5
+
+2004-06-15  Love  <lha@hummel.it.su.se>
+
+	* Release 0.36.1, see branch for changes
+
+2006-06-15  Ian Delahorne  <ian@stacken.kth.se>
+
+	* appl/vos/vos_local.h, appl/vos/vos_addsite.c, appl/vos/vos.c,
+	* appl/vos/Makefile.in, appl/vos/vos_remsite.c: 
+
+	added vos remsite. cleaned up in vos_add_site
+	
+2004-06-14  Love  <lha@stacken.kth.se>
+
+	* arlad/discon_log.c, arlad/ reconnect.c, arlad/darla.c:
+	OBSOLETE
+
+2004-06-13  Ian Delahorne  <ian@stacken.kth.se>
+
+	* appl/vos/vos_addsite.c: Lock volume, release connections
+
+2004-06-13  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_vfsops-macos.c: remove __P
+	
+	* nnpfs/bsd/nnpfs_vfsops-netbsd.c: remove __P
+	
+	* appl/mac/make-mac-package.sh.in: just create a package and don't
+	fool around copying stale data
+
+	* rx/Makefile.in: pacify libtool
+	
+	* arlad/arla_local.h: turn on flag assertions
+
+	* **/*.[ch]: prefix nnpfs symbols
+
+	* rxkad/rxk_serv.c: move RCSID, indent
+	
+	* appl/lib/arlalib.c: don't bother with kerberos support if it
+	was't heimdal
+	(arlalib_name_to_host): free result of getaddrinfo
+
+	* rxkad/rxk_serv.c: disable krb5 server for now
+	
+	* nnpfs/bsd/nnpfs_vnodeops-bsd.c (nnpfs_remove): add missing )
+	From: Massimo Marino <Massimo_Marino@lbl.gov>
+	
+2004-06-11  Love  <lha@stacken.kth.se>
+
+	* Release 0.36, see branch for changes
+	
+	* nnpfs/linux/nnpfs/nnpfs_locl.h: only include
+	<linux/modversions.h> on 2.4
+
+	* nnpfs/bsd/nnpfs_vfsops-netbsd.c: remove stale #define
+	
+	* lib/ko/auth.[ch]: no longer used
+	
+	* lib/ko/Makefile.am: drop auth.c
+	
+	* lib/ko/afs_uuid.c: add <string.h>
+	
+	* lib/vers/print_version.c: spelling
+	
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: s/#endidf/#endif/
+	
+	* configure.in: welcome to 0.37pre
+	
+2004-06-10  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_vfsops-bsd.c: spelling, thanks tol
+	
+	* nnpfs/bsd/nnpfs/nnpfs_vfsops-bsd.h: use nnpfs_statvfs
+	
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: define nnpfs_statvfs
+	
+	* nnpfs/bsd/nnpfs_vfsops-bsd.c: use nnpfs_statvfs
+	
+	* appl/vos/vos_listvldb.c: its -server, not -fileserver while
+	here, indent
+	
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: include <sys/statvfs.h>
+	
+2004-06-10  Ian Delahorne  <ian@stacken.kth.se>
+	* appl/vos_vos_addsite.c, appl/vos/vos.c:
+	Added vos addsite functionality
+
+2004-06-08  Ian Delahorne  <ian@stacken.kth.se>
+
+	* appl/vos/vos_local.h, appl/vos/vos.c, appl/vos/vos_addsite.c, 
+	appl/vos/Makefile.in:
+	Making way for vos addsite (almost implemented, just needs VLDB update)
+
+2004-06-08  Ian Delahorne  <ian@stacken.kth.se>
+
+	* appl/lib/arlalib.c: (arlalib_name_to_host) 
+	increment pointer is a good idea
+
+2004-06-07  Tomas Olsson  <tol@stacken.kth.se>
+
+	* appl/perf/afsfsperf.c (end_and_print_timer): it's MB/s
+
+2004-06-03  Love  <lha@stacken.kth.se>
+
+	* tools/release-tools/Makefile.in: explicit libtool mode
+	
+2004-06-03  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_syscalls-lossage.c (*): cleanup, rewrite
+
+	* nnpfs/linux/nnpfs_syscalls.c (install_afs_syscall): no need to
+	dig for syscall table if it's exported
+
+2004-06-02  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_message.c (nnpfs_message_installattr): more
+	quiet paranoia
+
+2004-06-01  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_dev.c (nnpfs_devwrite): better error handling
+
+	* nnpfs/bsd/nnpfs_dev-common.c (nnpfs_devwrite): better error
+	handling
+
+	* rx/rx_user.c (rxi_GetUDPSocket): no more SO_BSDCOMPAT
+
+	* nnpfs/linux/nnpfs_node.c: comments
+
+	* nnpfs/linux/nnpfs_dev.c (sigisactive): removed
+	(sigprocmask): added, for 2.4
+	(sigissignaled): make it work for 2.6
+	(nnpfs_message_rpc): simplify wait
+
+2004-05-31  ian@stacken.kth.se  <ian@stacken.kth.se>
+
+	* arla.init.in: use .ko extension on 2.6
+	use modprobe -q to avoid ominous "FATAL" message when the module
+	isn't in the load path
+
+2004-05-31  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_dev.c (nnpfs_{process,empty}_inactive_queue):
+	use inactive_sem
+	(nnpfs_devclose): call nnpfs_empty_inactive_queue w/o channel_sem held
+
+	* nnpfs/linux/nnpfs_vfsops.c
+	(make_root_vnode,nnpfs_{put,delete}_inode): use inactive_sem
+
+	* nnpfs/linux/nnpfs_message.c
+	(nnpfs_invalid_xnode): use inactive_sem
+	(nnpfs_message_delete_node): use inactive_sem
+	
+        * nnpfs/linux/nnpfs/nnpfs_fs.h (nnpfs): added inactive_sem,
+	protects inactive_list
+	
+2004-05-31  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_vfsops-bsd.c: add nnpfs_snapshot
+	
+	* nnpfs/bsd/nnpfs_syscalls-common.c: quick workaround for statfs
+	vs statvfs
+
+	* nnpfs/bsd/nnpfs_vfsops-common.c: quick workaround for statfs vs
+	statvfs
+
+	* nnpfs/bsd/nnpfs_vfsops-netbsd.c: add nnpfs_snapshot
+	
+	* nnpfs/bsd/nnpfs/nnpfs_vfsops-bsd.h: add nnpfs_snapshot
+	
+2004-05-30  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_syscalls.c (nnpfs_setgroups): for linux 2.6,
+	be careful with user buffers
+
+	* nnpfs/linux/nnpfs/nnpfs_node.h: spelling
+	* nnpfs/linux/nnpfs_syscalls.c (nnpfs_fh_to_dentry): verbose init
+	of qstr (struct changes in linux 2.6.7)
+
+	* nnpfs/linux/nnpfs_dev.c (nnpfs_message_rpc): sleep the old way
+	on 2.4 for now
+
+2004-05-28  Love  <lha@stacken.kth.se>
+
+	* configure.in: check for vfs_snapshot
+	
+	* nnpfs/bsd/nnpfs_vfsops-netbsd.c: add vfs_snapshot
+	
+2004-05-22  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/winnt/src/nnpfs_dev.c (nnpfs_message_receive): return
+	success on message_delete_node
+
+2004-05-13  Alexander Bostrom  <abo@kth.se>
+
+	* nnpfs/linux/Makefile.in:
+	nnpfs.ko is built in a subdir. Make sure install finds it.
+
+2004-05-13  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/winnt/src/nnpfs_message.c: update (C)
+	* nnpfs/winnt/src/nnpfs_message.c (nnpfs_message_installdata): do
+	nnpfs_check_backfile() only on success
+
+	* nnpfs/winnt/src/nnpfs_dev.c: update (C)
+	* nnpfs/winnt/src/nnpfs_dev.c (nnpfs_message_send): more verbose
+	on error
+
+	* nnpfs/winnt/src/nnpfs_deb.c (nnpfs_debug): compact
+
+2004-05-11  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_message.c (nnpfs_message_delete_node): get
+	channel_sem
+
+2004-05-10  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_message.c (nnpfs_message_invalidnode): don't
+	printk on error
+
+	* nnpfs/linux/nnpfs_message.c
+	(nnpfs_message_{delete_,install}node): enable limbo node handling
+	(clear_all_children): check for NULL
+
+	* nnpfs/linux/nnpfs_dev.c (*): enable limbo node handling
+	(nnpfs_devwrite): improve error handling
+
+	* nnpfs/linux/nnpfs_node.c (new_nnpfs_node, nnpfs_node_find):
+	handle limbo nodes
+	(nnpfs_free_node): remove from node hash
+	(clear_nnpfs_node): don't remove from node hash, set limbo flag
+
+	* nnpfs/linux/nnpfs/nnpfs_fs.h (NNPFS_FROM_XNODE): use
+	node->nnpfsp
+
+	* nnpfs/linux/nnpfs/nnpfs_node.h (nnpfs_node): added nnpfsp
+
+2004-05-09  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_message.c (*): use nnpfs_node_find() the new
+	way
+
+	* nnpfs/linux/nnpfs/nnpfs_fs.h (nnpfs_node_find): return int,
+	**node as arg
+
+	* nnpfs/linux/nnpfs_node.c (nnpfs_node_find): return int, **node
+	as arg
+	(new_nnpfs_node): use nnpfs_node_find() the new way
+
+2004-05-08  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_message.c (nnpfs_message_install{node,root}):
+	call new_nnpfs_node() the new way
+
+	* nnpfs/linux/nnpfs_vfsops.c (make_root_vnode): call
+	new_nnpfs_node() the new way
+
+	* nnpfs/linux/nnpfs_node.c (new_nnpfs_node): return int, **result as arg
+	
+	* nnpfs/linux/nnpfs/nnpfs_fs.h (new_nnpfs_node): update proto
+
+	* nnpfs/linux/nnpfs_message.c (*): cleanup
+	(nnpfs_message_delete_node): added
+
+        * nnpfs_{dev,inodeops,message,syscalls,vfsops}.c
+	merge nnpfs_channel into struct nnpfs
+
+	* nnpfs_{dev,fs,msg_locl}.h:
+	merge nnpfs_channel into struct nnpfs
+
+	* nnpfs/linux/nnpfs/nnpfs_msg_locl.h (nnpfs_message_delete_node):
+	added
+
+2004-05-07  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_dev.c (nnpfs_message_rpc): block unwanted
+	signals when sleeping
+
+	* nnpfs/linux/nnpfs_vfsops.c (make_root_vnode): take *nnpfs as
+	arg, not sb
+	(make_root): call make_root_vnode() new way
+
+2004-05-07  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_vnodeops-bsd.c: do the freebsd < 3.0 tests
+	differently
+
+2004-05-05  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_vfsops.c (make_root_vnode): use
+	nnpfs_free_node()
+
+	* nnpfs/linux/nnpfs_dev.c (free_node): removed
+	(*): use nnpfs_free_node() instead
+
+	* nnpfs/linux/nnpfs/nnpfs_fs.h (free_nnpfs_node): removed
+	(nnpfs_free_node): added
+
+	* nnpfs/linux/nnpfs_syscalls.c: lower NNPFS_PAG_ULIM, better range
+	checks for 2.6
+
+	* nnpfs/linux/nnpfs_node.c (new_nnpfs_node): don't panic on malloc
+	failure
+	(free_nnpfs_node): removed
+	(nnpfs_free_node): added
+
+	* nnpfs/linux/nnpfs_vfsops.c 
+	(make_root_vnode): don't use free_nnpfs_node()
+	
+	* nnpfs/linux/nnpfs_message.c: indent
+
+2004-05-04  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_vnodeops-bsd.c (nnpfs_remove): just call
+	ubc_uncache, that all that needed for 10.3
+	(*): remove freebsd < 3.0 support
+
+	* nnpfs/bsd/nnpfs_vnodeops-common.c (nnpfs_getattr_common): if
+	__APPLE__, also set va_fsid, this fixes the finder bug where
+	everything turns into symlink in 10.3
+
+2004-05-03  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_dev.c (nnpfs_message_rpc): use
+	wait_event_interruptible() to sleep
+	(nnpfs_devclose, nnpfs_message_wakeup{,_data}):
+	set woken flag before calling wake_up()
+
+	* conf/arla.conf.in: added fake_stat
+
+2004-05-02  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_vfsops.c (nnpfs_delete_inode): compact
+
+	* nnpfs/linux/nnpfs_dev.c (free_node): empty inactive_list if it
+	isn't
+	(nnpfs_queue_inactive): don't tear down inactive_list
+
+2004-05-02  Alexander Bostrom  <abo@kth.se>
+
+	* nnpfs/linux/Makefile.in: Tidy up the kbuild usage.
+	Don't use the modules_install target in kbuild.
+
+2004-05-01  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_message.c: use NNPFS_LIMBO
+
+	* nnpfs/bsd/nnpfs_vnodeops-common.c (nnpfs_reclaim_common): use
+	NNPFS_LIMBO
+
+        * nnpfs/include/nnpfs/nnpfs_message.h:
+	added NNPFS_LIMBO node flag: inactive but not yet ack:ed by daemon
+	
+	* nnpfs/linux/nnpfs_dev.c: indent
+
+	* nnpfs/linux/nnpfs_vfsops.c (make_root_vnode): no need to null
+	nulled xnode
+	(*): indent
+
+	* nnpfs/linux/nnpfs_node.c (clear_nnpfs_node): use VNODE_SET_XNODE
+	(*): indent
+
+2004-04-29  Love  <lha@stacken.kth.se>
+
+	* appl/lib/arlalib.c (get_cred5): field keytype is really a
+	enctype
+	
+2004-04-28  Love  <lha@stacken.kth.se>
+
+	* arlad/dump_state.c: cast size_t to long and hope that that is
+	enough
+	
+	* lwp/Makefile.in: tell libfool the operation type
+	
+2004-04-28  Harald Barth  <haba@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_inodeops.c: Fixes to get rid of compiler
+	warnings for declarations and unused variables
+	* INSTALL, README: First attempt to update with fresh information
+	* NEWS: Grammar and some spelling
+
+2004-04-27  Love  <lha@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_dev.c (nnpfs_message_rpc): hold on to the
+	channel semaphore longer and claim it earlier so we know that we
+	don't race the parent before we wake up and after they have set
+	our flag
+	
+2004-04-27  Love  <lha@stacken.kth.se>
+
+	* configure.in: 0.36alpha2
+	
+2004-04-26  Alexander Boström  <abo@kth.se>
+
+	* nnpfs/linux/Makefile.in: Improved Linux 2.6 support. Made clean
+	target work.
+
+2004-04-23  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs/nnpfs_locl.h: no devfs support on linux 2.6
+
+	* nnpfs/linux/nnpfs_inodeops.c (nnpfs_inode_valid): added
+	(*): use nnpfs_inode_valid()
+
+	* configure.in: linux: set ARLA_CONF_LOWVNODES properly
+
+2004-04-20  Love  <lha@stacken.kth.se>
+
+	* configure.in: 0.36alpha1
+	
+2004-04-19  Tomas Olsson  <tol@stacken.kth.se>
+
+        * NEWS: mention Linux 2.6 support
+	
+	* nnpfs/linux/nnpfs_dev.c: removed old comment
+
+	* nnpfs/linux/nnpfs/nnpfs_locl.h (NNPFS_MOD_{DE,}REF): noop for
+	linux 2.6
+
+	* nnpfs/linux/bin/startarla.in: support for linux 2.6
+
+	* nnpfs/linux/nnpfs_syscalls-lossage.c: support for linux 2.6
+
+	* nnpfs/linux/nnpfs_inodeops.c: configure test sets
+	HAVE_GETATTR_THREE_ARGS for us
+
+	* nnpfs/linux/Makefile.in: try to build the 2.6 way, too. From
+	Alexander Boström <abo@e.kth.se>
+
+	* nnpfs/linux/*.c: don't use RCSID() unless defined
+
+	* nnpfs/linux/nnpfs_syscalls.c: Simple PAG handling for linux 2.6
+
+2004-04-18  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_inodeops.c (nnpfs_open): set struct
+	file->f_mapping for 2.6
+	(nnpfs_unlink): 2.6: don't d_delete()
+	(nnpfs_d_revalidate): 2.6: use old code, different args
+
+	* nnpfs/linux/nnpfs_vfsops.c (make_root): set NNPFS_ROOTINSTALLED
+	({nnpfs_fill_super,nnpfs_get_sb}): added for 2.6
+
+	* nnpfs/linux/nnpfs_load.c: use linux/init.h, module_init,
+	module_exit, ...  2.6: fill in nnpfs_fs_type directly
+
+2004-04-08  Love  <lha@stacken.kth.se>
+
+	* tests/Makefile.in: tell libfool what mode we run in
+	
+2004-04-05  Love  <lha@stacken.kth.se>
+
+	* arlad/d-trans.c (tfid_free): memset whole element, not just the
+	size of the pointer From: Aaron Campbell <aaron@monkey.org>
+	
+2004-04-04  Tomas Olsson  <tol@stacken.kth.se>
+
+	* NEWS: added nnpfs/w2k
+
+2004-04-02  Love  <lha@stacken.kth.se>
+
+	* arlad/arlad.c: Reuse the main thread as the kernel thread From:
+	Richard Nyberg <rnyberg@it.su.se>
+	
+2004-03-31  Love  <lha@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_node.c: use VNODE_SET_XNODE
+	
+	* nnpfs/linux/nnpfs_vfsops.c: use VNODE_SET_XNODE and VFS_SET_NNPFS
+	
+	* nnpfs/linux/nnpfs/nnpfs_fs.h: add VNODE_SET_XNODE
+	
+	* nnpfs/linux/nnpfs/nnpfs_node.h: add VFS_SET_NNPFS
+	
+	* nnpfs/linux/nnpfs_dev.c (nnpfs_message_receive): ignore
+	NNPFS_MSG_DELETE_NODE for now, indent.
+	
+2004-03-27  Tomas Olsson  <tol@stacken.kth.se>
+
+	* lwp/plwp.h: void-ify protos
+
+	* lwp/plwp.c (Cal_Highest_runnable_priority): fix proto
+
+	* appl/mac/.cvsignore: added; ignore Makefile.in
+
+2004-03-26  Tomas Olsson  <tol@stacken.kth.se>
+
+	* configure.in: more s/__SMP__/CONFIG_SMP/
+
+2004-03-26  Love  <lha@stacken.kth.se>
+
+	* lwp/plwp.c (Create_Process_Part2): don't even bother setting
+	stacksize _after_ thread is created
+	
+	* arlad/arlad.c: use default_stacksize
+	
+	* arlad/conn.c: use default_stacksize
+	
+	* arlad/fcache.c: use default_stacksize
+	
+	* arlad/kernel.c: use default_stacksize
+	
+	* arlad/poller.c: use default_stacksize
+	
+	* arlad/arla.c: add tunable variable default_stacksize
+	
+	* arlad/arla_local.h: add overridable DEFAULT_STACKSIZE, bump to
+	twice the previous size
+	add extern int default_stacksize;
+
+2004-03-25  Tomas Olsson  <tol@stacken.kth.se>
+
+	* configure.in: linux: s/__SMP__/CONFIG_SMP/
+
+	* lwp/rw.c (main): don't do setbuf()
+
+2004-03-17  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_vfsops.c (make_root_vnode): don't clear free:d
+	xnode
+
+2004-03-15  Love  <lha@stacken.kth.se>
+
+	* appl/vos/vos_examine.c: "reson" -> "reason", jj@it.su.se
+	
+	* appl/lib/arlalib.c (get_cred5): remove extra bonus ; From: Aaron
+	Campbell <aaron@monkey.org> and OpenBSD
+	
+2004-03-12  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_dev-common.c (nnpfs_message_send):
+	s/M_NNPFS/M_NNPFS_LINK/ From: Richard Nyberg <rnyberg@it.su.se>
+	
+2004-02-19  Love  <lha@stacken.kth.se>
+
+	* configure.in: make darwin use 40k/30k (just like linux) this to
+	workaround silly ubc that keeps vnodes incore and used up
+	
+	* nnpfs/bsd/nnpfs_vfsops-bsd.c: use fdrop on freebsd 5.2 and
+	newer, everything else uses ffree
+
+	* configure.in: set version to COM_APPLE_KERNEL_BSD to 6.0 for
+	darwin 7.0
+
+	* arlad/volcache.c (get_info_loop): cell name is more important
+	than cell number
+
+2004-02-15  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_vnodeops-common.c (nnpfs_reclaim_common): change
+	order things are freed
+	
+	* nnpfs/bsd/nnpfs_node-osf.c (nnpfs_free_node): Remove node from
+	hash.
+
+	* nnpfs/bsd/nnpfs_node-bsd.c (nnpfs_free_node): Remove node from
+	hash. Don't touch the vnode, it probably no longer there
+	
+	* nnpfs/bsd/nnpfs_message.c (nnpfs_message_delete_node): don't
+	remove node from hash, nnpfs_free_node does that
+	
+	* nnpfs/bsd/nnpfs_dev-common.c (nnpfs_devclose_common): don't
+	remove node from free queue, nnpfs_free_node does that
+	
+2004-02-14  Love  <lha@stacken.kth.se>
+
+	* configure.in: some headers files are special and need even more
+	autoconf glue
+
+2004-02-12  Love  <lha@stacken.kth.se>
+
+	* acinclude.m4: pacify automake 1.8
+	
+	* doc/arla.texi: add Dale Rahn copyright notice
+	
+	* lwp/make-process.o.sh.in: add arm
+	
+	* lwp/process.arm.S: arm lwp context switch, by Dale Rahn, OpenBSD
+	
+	* nnpfs/bsd/nnpfs_vnodeops-bsd.c (nnpfs_symlink): on error, always
+	unlock
+
+	* nnpfs/bsd/nnpfs_vnodeops-bsd.c (nnpfs_symlink): if dvp is same a
+	vp, don't vput it
+
+2004-02-11  Love  <lha@stacken.kth.se>
+
+	* nnpfs/include/nnpfs/nnpfs_queue.h: add NNPQUEUE_FIRST
+	
+	* nnpfs/bsd/nnpfs_dev-common.c (nnpfs_devclose_common): free all
+	deferred free nodes
+
+	* nnpfs/bsd/nnpfs_message.c (nnpfs_message_delete_node): make the
+	panic a printf
+	
+	* nnpfs/bsd/nnpfs_vnodeops-common.c (nnpfs_reclaim_common): insert
+	node on freelist, if there isn't a device attached, go for a
+	direct kill^Wfree
+
+	* nnpfs/bsd/nnpfs/nnpfs_node.h: add entry to freelist
+	
+	* nnpfs/bsd/nnpfs_vfsops-common.c (nnpfs_unmount_common): init
+	node free list
+
+	* nnpfs/bsd/nnpfs_node-osf.c (nnpfs_free_node): remove node from
+	free list
+
+	* nnpfs/bsd/nnpfs_node-bsd.c (nnpfs_free_node): remove node from
+	free list
+
+	* nnpfs/bsd/nnpfs/nnpfs.h: add a list of freed nodes
+	
+2004-02-10  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_vfsops-netbsd.c: for the dead vnode, install the
+	putpages in the putpages slot, not the getpages slot, avoids that
+	pesky assert
+
+2004-02-09  Love  <lha@stacken.kth.se>
+
+	* lwp/make-process.o.sh.in: build process.x86_64.S
+	
+	* lwp/Makefile.in: PROCESS_S += process.x86_64.S
+	
+	* arlad/{d-trans.c,disco.c,disco.h,play_disco.c,poller.c,
+	poller.h,ptest.c}: spelling
+
+	* lwp/plwp.c: clean out some unused cpp-symbols
+	
+	* lwp/lwp_asm.c: clean out some unused cpp-symbols
+	
+	* lwp/lwp_asm.c: REGSIZE is 8 on amd64, From Theo de Raadt,
+	OpenBSD
+
+2004-02-08  Love  <lha@stacken.kth.se>
+
+	* appl/mac/Makefile.{am,in}: remove mafslog for now and while
+	here, automakify
+
+	* HACKING: appl/mac/Makefile is automake-ifid
+	
+	* nnpfs/bsd: rename {new,free,free_all}_nnpfs_node(s) to nnpfs_mumble
+
+	* nnpfs/bsd/nnpfs_vfsops-common.c: avoid defining nnpfs_dev twice
+	
+	* nnpfs/bsd/nnpfs_wrap-bsd.c: merge nnpfs_channel and nnpfs
+	
+	* nnpfs/bsd/nnpfs_vnodeops-common.c: handle delete nodes flag
+	
+	* nnpfs/bsd/nnpfs_vfsops-common.c: merge nnpfs_channel and nnpfs
+	
+	* nnpfs/bsd/nnpfs_vfsops-bsd.c: merge nnpfs_channel and nnpfs
+	
+	* nnpfs/bsd/nnpfs_node-osf.c: add struct nnpfs * argument to
+	free_nnpfs_node
+
+	* nnpfs/bsd/nnpfs_node-bsd.c: merge nnpfs_channel and nnpfs add
+	struct nnpfs * argument to free_nnpfs_node
+	
+	* nnpfs/bsd/nnpfs_message.c: merge nnpfs_channel and nnpfs handle
+	delete nodes messages
+	
+	* nnpfs/bsd/nnpfs_dev-osf.c: merge nnpfs_channel and nnpfs
+	
+	* nnpfs/bsd/nnpfs_dev-common.c: merge nnpfs_channel and nnpfs
+	handle delete nodes messages improve on message parseing code
+	
+	* nnpfs/bsd/nnpfs_dev-bsd.c: merge nnpfs_channel and nnpfs
+	
+	* nnpfs/bsd/nnpfs/nnpfs_dev.h: merge nnpfs_channel and nnpfs
+	
+	* nnpfs/bsd/nnpfs/nnpfs.h: merge nnpfs_channel and nnpfs
+	
+	* nnpfs/bsd/nnpfs/nnpfs_fs.h: merge nnpfs_channel and nnpfs
+	(free_nnpfs_node): add struct nnpfs argument
+
+	* arlad/nnpfs.c (rcvfuncs_name): add delete_node
+	
+	* arlad/messages.c (nnpfs_message_inactivenode): send delete_node
+	message if NNPFS_DELETE flag is set
+	(rcvfunsc): add delete_node
+
+	* nnpfs/include/nnpfs/nnpfs_message.h: add NNPFS_MSG_DELETE_NODE
+	
+	* nnpfs/bsd/nnpfs_vnodeops-netbsd.c: update mtime
+	
+2004-02-06  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_vfsops-bsd.c: darwin7.3 VFS_FHTOVP is diffrent,
+	just punt for now
+
+	* configure.in: move -fnobuilt-in to KERNEL_CFLAGS from
+	KERNEL_CPPFLAGS indent
+	
+2004-02-04  Love  <lha@stacken.kth.se>
+
+	* arlad/conn.c: define RTT_FUZZ here
+	
+	* arlad/conn.h: make RTT_FUZZ a extern variable
+	
+	* nnpfs/bsd/nnpfs_vnodeops-bsd.c: kernel_upl_commit_range takes a
+	extra argument in darwin7.2.0, ignore backward compat for now
+	
+	* configure.in: make possibly work on darwin7.2.0
+	
+	* nnpfs/bsd/nnpfs_vfsops-bsd.c: protect nnpfs_dead_putpages with
+	HAVE_VOP_PUTPAGES
+
+	* nnpfs/bsd/nnpfs/nnpfs_vfsops-bsd.h: protect nnpfs_dead_putpages
+	with HAVE_VOP_PUTPAGES
+
+	* ydr/Makefile.am: include YDR_CPPFLAGS in CPP
+	
+	* ydr/lex.l: ignore #pragma
+	
+2004-02-03  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_vnodeops-bsd.c: change version freebsd got 5th
+	argument to 5.2-release
+
+	* nnpfs/bsd/nnpfs_vfsops-bsd.c: change version freebsd got 5th
+	argument to 5.2-release
+
+2004-01-30  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_vfsops-bsd.c: make compile for freebsd5.2
+	
+	* configure.in: continue check for kerberos 4, some libkafs needs
+	it
+
+	* arla/nnpfs/bsd/nnpfs_vnodeops-bsd.c: note that freebsd 5.2
+	VOP_OPEN is diffrent
+
+2004-01-30  Love  <lha@stacken.kth.se>
+
+	* appl/Makefile.am: last commit overly happy, revert back to 1.2
+	and add afsutils there
+
+	* appl/Makefile.am: add afsutils for tokens (we don't build
+	anything else)
+
+	* rxkad/rxk_serv.c: use FC_ENCRYPT/FC_DECRYPT, don't depend on
+	libdes old compat glue
+	
+	* rxkad/rxk_crpt.c: more FC_ENCRYPT/FC_DECRYPT
+	
+	* rxkad/rxk_clnt.c: use FC_ENCRYPT/FC_DECRYPT, don't depend on
+	libdes old compat glue less libdes where its really fastcrypt
+	
+	* rxkad/rxk_crpt.c: use FC_ENCRYPT/FC_DECRYPT, don't depend on
+	libdes old compat glue
+
+	* rxkad/rxk_locl.c: use FC_ENCRYPT/FC_DECRYPT, don't depend on
+	libdes old compat glue
+
+	* rxkad/rxkad_locl.h: define FC_ENCRYPT/FC_DECRYPT
+	
+2004-01-28  Love  <lha@stacken.kth.se>
+
+	* arlad/ThisCell.5: spelling; from Ross L Richardson, OBSD PR
+	3655, via jmc@openbsd.org
+
+2004-01-27  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_vfsops-netbsd.c: use nnpfs_dead_putpages instead
+	of genfs_null_putpages
+	
+	* nnpfs/bsd/nnpfs/nnpfs_vfsops-bsd.h: add nnpfs_dead_putpages
+	
+	* nnpfs/bsd/nnpfs_vfsops-bsd.c: implement nnpfs_dead_putpages
+	
+2004-01-22  Love  <lha@stacken.kth.se>
+
+	* arlad/fcache.c (read_data): handle fileservers that return
+	negative size in RXAFS_FetchData
+
+2004-01-19  Love  <lha@stacken.kth.se>
+
+	* configure.in: specify automake options
+	
+2004-01-14  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_vnodeops-netbsd.c: add vop_advlock
+	
+2004-01-04  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* nnpfs/bsd/nnpfs_dev-bsd.c: wrap more members in struct cdevfs in
+	ifdefs on freebsd
+	* configure.in: check for more members in struct cdevfs on bsd.
+
+For older ChangeLog entries see ChangeLog.2003

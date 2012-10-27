@@ -1,0 +1,366 @@
+# $Id: Makefile.in,v 1.99 2007/01/12 17:36:53 tol Exp $
+
+srcdir		= @srcdir@
+top_builddir	= ..
+VPATH		= @srcdir@
+
+SHELL		= /bin/sh
+
+CC		= @CC@
+CFLAGS		= @CFLAGS@
+REALCFLAGS	= -I$(srcdir)/.. -I../include -I$(srcdir)/../include \
+		  @KRB5_INC_FLAGS@ \
+		  $(CFLAGS) -I../rxdef -I$(srcdir)/../appl/lib @INC_roken@
+CPPFLAGS	= @CPPFLAGS@
+DEFS		= @DEFS@
+LDFLAGS		= @LDFLAGS@
+LIBS		= @LIBS@
+ROKEN_LIBS	= @LIB_roken@
+KAFS_LIBS	= @AFS_EXTRA_LIBS@ @KAFS_LIBS@
+KRB_LIBS	= @KRB5_LIB_FLAGS@
+APPL_LIB	= -L../appl/lib -larlalib \
+		  ../lib/ko/libko.la ../util/libarlautil.la
+
+
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
+bindir		= @bindir@
+
+TEST_PROGRAMS = write-ro-file hello-world read-vs-mmap read-vs-mmap2	 \
+		mmap-and-read large-dir large-dir2 large-dir3 mountpoint \
+		test-setgroups test-setpag hardlink1 hardlink2 mkdir2	 \
+		create-files create-symlinks create-dirs dup2-and-unlog	 \
+		readdir-vs-lstat read-write ga-test create-remove	 \
+		symlink echo-n test-parallel1 test-parallel2 create-stat \
+		kill-softly kill-softer rm-rf apwd exit-wo-close	 \
+		mmap-vs-read mmap-vs-read2 strange-characters-c pine	 \
+		append-over-page write-ucc utime-dir mmap-shared-write	 \
+		rename5 rename-under-feet write-closed write-closed2	 \
+		truncate fchmod fhbench make-page utime-file		 \
+		invalidate-file write3 write4 still-there-p		 \
+		intr-read asu truncate-files mmap-cat blocks-new-file	 \
+		read-past-eof						 \
+		write-6G-file						 \
+		write-link						 \
+		genrandom						 \
+		macos-getattrlist-leak					 \
+		mtime-file						 \
+		mmap-and-fork						 \
+		sleepwriter						 \
+		sha1sum							 \
+		truncate-write						 \
+		unlink-under-feet					 \
+		write-error
+
+TEST_OBJS     = write-ro-file.o read-vs-mmap.o read-vs-mmap2.o		   \
+		mmap-and-read.o large-dir.o large-dir2.o large-dir3.o	   \
+		test-setgroups.o test-setpag.o hardlink1.o hardlink2.o	   \
+		mkdir2.o create-files.o create-symlinks.o create-dirs.o	   \
+		dup2-and-unlog.o readdir-vs-lstat.o read-write.o ga-test.o \
+		create-remove.o symlink.o echo-n.o test-parallel1.o	   \
+		test-parallel1.o					   \
+		create-stat.o kill-softly.o kill-softer.o rm-rf.o apwd.o   \
+		exit-wo-close.o mmap-vs-read.o mmap-vs-read2.o		   \
+		strange-characters-c.o pine.o append-over-page.o	   \
+		write-ucc.o utime-dir.o mmap-shared-write.o rename5.o	   \
+		rename-under-feet.o write-closed.o write-closed2.o	   \
+		truncate.o fchmod.o fhbench.o make-page.o utime-file.o	   \
+		invalidate-file.o write3.o write4.o still-there-p.o 	   \
+		intr-read.o asu.o truncate-files.o mmap-cat.o		   \
+		blocks-new-file.o				           \
+		read-past-eof.o						   \
+		write-6G-file.o						   \
+		write-link.o						   \
+		genrandom.o						   \
+		macos-getattrlist-leak.o				   \
+		mtime-file.o						   \
+		mmap-and-fork.o						   \
+		sleepwriter.o						   \
+		sha1sum.o						   \
+		truncate-write.o					   \
+		unlink-under-feet.o	 				   \
+		write-error
+
+
+TEST_SRCS     = write-ro-file.c read-vs-mmap.c read-vs-mmap2.c		   \
+		mmap-and-read.c large-dir.c large-dir2.c large-dir3.c	   \
+		test-setgroups.c test-setpag.c hardlink1.c hardlink2.c	   \
+		mkdir2.c create-files.c create-symlinks.c create-dirs.c	   \
+		dup2-and-unlog.c readdir-vs-lstat.c read-write.c ga-test.c \
+		create-remove.c symlink.c echo-n.c test-parallel1.c	   \
+		test-parallel2.c	   \				   \
+		create-stat.c kill-softly.c kill-softer.c rm-rf.c apwd.c   \
+		exit-wo-close.c mmap-vs-read.c mmap-vs-read2.c		   \
+		strange-characters-c.c pine.c append-over-page.c	   \
+		write-ucc.c utime-dir.c mmap-shared-write.c rename5.c	   \
+		rename-under-feet.c write-closed.c write-closed2.c	   \
+		truncate.c fchmod.c fhbench.c make-page.c utime-file.c	   \
+		invalidate-file.c write3.c write4.c still-there-p.c	   \
+		intr-read.c asu.c truncate-files.c mmap-cat.c		   \
+		blocks-new-file.c					   \
+		read-past-eof.c						   \
+		write-6G-file.c						   \
+		write-link.c						   \
+		genrandom.c						   \
+		macos-getattrlist-leak.c				   \
+		mtime-file.c						   \
+		mmap-and-fork.c						   \
+		sleepwriter.c						   \
+		sha1sum.c						   \
+		truncate-write.c					   \
+		unlink-under-feet.c	 				   \
+		write-error
+
+all: run-tests $(TEST_PROGRAMS)
+
+run-tests: run-tests.in
+	(cd ..; CONFIG_FILES=tests/run-tests CONFIG_HEADERS= $(SHELL) config.status)
+	@chmod +x run-tests
+
+write-ro-file: write-ro-file.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ write-ro-file.o $(ROKEN_LIBS) $(LIBS)
+
+write-error: write-error.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ write-error.o $(ROKEN_LIBS) $(LIBS)
+
+read-vs-mmap: read-vs-mmap.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ read-vs-mmap.o $(ROKEN_LIBS) $(LIBS)
+
+read-vs-mmap2: read-vs-mmap2.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ read-vs-mmap2.o $(ROKEN_LIBS) $(LIBS)
+
+macos-getattrlist-leak: macos-getattrlist-leak.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ macos-getattrlist-leak.o $(ROKEN_LIBS) $(LIBS)
+
+mmap-vs-read: mmap-vs-read.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ mmap-vs-read.o $(ROKEN_LIBS) $(LIBS)
+
+mmap-vs-read2: mmap-vs-read2.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ mmap-vs-read2.o $(ROKEN_LIBS) $(LIBS)
+
+mmap-and-fork: mmap-and-fork.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ mmap-and-fork.o $(ROKEN_LIBS) $(LIBS)
+
+mtime-file: mtime-file.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ mtime-file.o $(ROKEN_LIBS) $(LIBS)
+
+read-write: read-write.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ read-write.o $(ROKEN_LIBS) $(LIBS)
+
+mmap-and-read: mmap-and-read.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ mmap-and-read.o $(ROKEN_LIBS) $(LIBS)
+
+large-dir: large-dir.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ large-dir.o $(ROKEN_LIBS) $(LIBS)
+
+large-dir2: large-dir2.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ large-dir2.o $(ROKEN_LIBS) $(LIBS)
+
+large-dir3: large-dir3.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ large-dir3.o $(ROKEN_LIBS) $(LIBS)
+
+fchmod: fchmod.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ fchmod.o $(ROKEN_LIBS) $(LIBS)
+
+read-past-eof: read-past-eof.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ read-past-eof.o $(ROKEN_LIBS) $(LIBS)
+
+write-6G-file: write-6G-file.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ write-6G-file.o $(ROKEN_LIBS) $(LIBS)
+
+write-link: write-link.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ write-link.o $(ROKEN_LIBS) $(LIBS)
+
+truncate: truncate.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ truncate.o $(ROKEN_LIBS) $(LIBS)
+
+make-page: make-page.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ make-page.o $(ROKEN_LIBS) $(LIBS)
+
+still-there-p: still-there-p.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ still-there-p.o $(ROKEN_LIBS) $(LIBS)
+
+intr-read: intr-read.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ intr-read.o $(ROKEN_LIBS) $(LIBS)
+
+blocks-new-file: blocks-new-file.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ blocks-new-file.o $(ROKEN_LIBS) $(LIBS)
+
+ga-test: ga-test.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ ga-test.o $(APPL_LIB) $(ROKEN_LIBS) $(LIBS)
+
+asu: asu.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ asu.o $(ROKEN_LIBS) $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
+
+test-setgroups: test-setgroups.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ test-setgroups.o $(ROKEN_LIBS) $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
+
+test-setpag: test-setpag.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ test-setpag.o $(ROKEN_LIBS) $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
+
+hardlink1: hardlink1.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ hardlink1.o $(ROKEN_LIBS) $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
+
+hardlink2: hardlink2.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ hardlink2.o $(ROKEN_LIBS) $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
+
+mkdir2: mkdir2.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ mkdir2.o $(ROKEN_LIBS) $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
+
+create-files: create-files.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ create-files.o $(ROKEN_LIBS) $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
+
+create-symlinks: create-symlinks.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ create-symlinks.o $(ROKEN_LIBS) $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
+
+create-dirs: create-dirs.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ create-dirs.o $(ROKEN_LIBS) $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
+
+create-remove: create-remove.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ create-remove.o $(ROKEN_LIBS) $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
+
+
+dup2-and-unlog: dup2-and-unlog.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ dup2-and-unlog.o $(ROKEN_LIBS) $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
+
+readdir-vs-lstat: readdir-vs-lstat.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ readdir-vs-lstat.o $(ROKEN_LIBS) $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
+
+symlink: symlink.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ symlink.o $(ROKEN_LIBS) $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
+
+echo-n: echo-n.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ echo-n.o
+
+test-parallel1: test-parallel1.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ test-parallel1.o $(ROKEN_LIBS) $(LIBS)
+
+test-parallel2: test-parallel2.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ test-parallel2.o $(ROKEN_LIBS) $(LIBS)
+
+create-stat: create-stat.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ create-stat.o $(APPL_LIB) $(ROKEN_LIBS) $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
+
+kill-softly: kill-softly.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ kill-softly.o $(APPL_LIB) $(ROKEN_LIBS) $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
+
+kill-softer: kill-softer.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ kill-softer.o $(APPL_LIB) $(ROKEN_LIBS) $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
+
+rm-rf: rm-rf.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ rm-rf.o $(APPL_LIB) $(ROKEN_LIBS) $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
+
+apwd: apwd.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ apwd.o $(APPL_LIB) $(ROKEN_LIBS) $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
+
+invalidate-file: invalidate-file.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ invalidate-file.o $(APPL_LIB) $(ROKEN_LIBS) $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
+
+exit-wo-close: exit-wo-close.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ exit-wo-close.o $(APPL_LIB) $(ROKEN_LIBS) $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
+
+strange-characters-c: strange-characters-c.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ strange-characters-c.o $(ROKEN_LIBS) $(KRB_LIBS) $(LIBS)
+
+pine: pine.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ pine.o $(ROKEN_LIBS) $(KRB_LIBS) $(LIBS)
+
+append-over-page: append-over-page.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ append-over-page.o $(ROKEN_LIBS) $(KRB_LIBS) $(LIBS)
+
+write-ucc: write-ucc.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ write-ucc.o $(ROKEN_LIBS) $(KRB_LIBS) $(LIBS)
+
+utime-dir: utime-dir.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ utime-dir.o $(ROKEN_LIBS) $(KRB_LIBS) $(LIBS)
+
+utime-file: utime-file.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ utime-file.o $(ROKEN_LIBS) $(LIBS)
+
+mmap-shared-write: mmap-shared-write.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ mmap-shared-write.o $(ROKEN_LIBS) $(KRB_LIBS) $(LIBS)
+
+rename5: rename5.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ rename5.o $(ROKEN_LIBS) $(KRB_LIBS) $(LIBS)
+
+write3: write3.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ write3.o $(ROKEN_LIBS) $(LIBS)
+
+write4: write4.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ write4.o $(APPL_LIB) $(ROKEN_LIBS) $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
+
+rename-under-feet: rename-under-feet.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ rename-under-feet.o $(ROKEN_LIBS) $(KRB_LIBS) $(LIBS)
+
+write-closed: write-closed.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ write-closed.o $(ROKEN_LIBS) $(KRB_LIBS) $(LIBS)
+
+write-closed2: write-closed2.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ write-closed2.o $(ROKEN_LIBS) $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
+
+fhbench: fhbench.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ fhbench.o $(APPL_LIB) $(ROKEN_LIBS) $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
+
+truncate-files: truncate-files.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ truncate-files.o $(APPL_LIB) $(ROKEN_LIBS) $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
+
+genrandom: genrandom.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ genrandom.o $(ROKEN_LIBS) $(LIBS)
+
+sleepwriter: sleepwriter.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ sleepwriter.o $(ROKEN_LIBS) $(LIBS)
+
+sha1sum.o: sha1sum.c
+	$(top_builddir)/libtool --mode=compile $(CC) -c $(CPPFLAGS) $(DEFS) -I$(srcdir) -I$(srcdir)/../util -I. $(REALCFLAGS) $<
+
+sha1sum: sha1sum.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ sha1sum.o $(APPL_LIB) $(ROKEN_LIBS) $(LIBS)
+
+truncate-write: truncate-write.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ truncate-write.o $(APPL_LIB) $(ROKEN_LIBS) $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
+
+unlink-under-feet: unlink-under-feet.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ unlink-under-feet.o $(ROKEN_LIBS) $(LIBS)
+
+mmap-cat: mmap-cat.o
+	$(top_builddir)/libtool --mode=link $(CC) $(LDFLAGS) -o $@ mmap-cat.o $(APPL_LIB) $(ROKEN_LIBS) $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
+
+.c.o:
+	$(top_builddir)/libtool --mode=compile $(CC) -c $(CPPFLAGS) $(DEFS) -I$(srcdir) -I. $(REALCFLAGS) $<
+
+hello-world:   hello-world.in
+	sed -e "s!%CC%!$(CC)!" $(srcdir)/hello-world.in > $@
+	chmod +x hello-world
+
+mountpoint:   mountpoint.in
+	sed -e "s!%bindir%!$(bindir)!" $(srcdir)/mountpoint.in > $@
+	chmod +x mountpoint
+
+clean:
+	rm -f run-tests $(TEST_PROGRAMS) *.o *~
+
+realclean:
+
+distclean: clean
+	rm -f Makefile
+
+mostlyclean:
+
+install:
+
+uninstall:
+
+
+TAGS:	$(TEST_SRCS)
+	etags $(TEST_SRCS)
+
+check: run-tests $(TEST_PROGRAMS)
+	./run-tests -all
+
+check-fast: run-tests $(TEST_PROGRAMS)
+	./run-tests -all -fast
+
+Makefile:	Makefile.in ../config.status
+		cd ..; CONFIG_FILES=tests/Makefile CONFIG_HEADERS= $(SHELL) config.status
+
+.PHONY:		all install clean realclean distclean mostlyclean install uninstall check

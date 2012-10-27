@@ -1,0 +1,96 @@
+#!/bin/sh
+#
+# $Id: make-mac-package.sh.in,v 1.13 2007/01/12 16:10:49 tol Exp $
+#
+# Will create the package in the current directory
+# Uses `pwd`/destdir and `pwd`/pkgtmp to create the packege
+# and removes both of them, so make sure they don't exists
+#
+
+objdir=`dirname $0`
+where=`pwd`
+
+VERSION=%VERSION%
+PREFIX=%prefix%
+SRCDIR=%srcdir%
+
+DESTDIR=`pwd`/destdir
+TMPDIR=`pwd`/pkgtmp
+
+rm -r \
+    $TMPDIR \
+    $DESTDIR \
+    arla-$VERSION.dmg
+
+# We need to get the permissions right here. Seems we want
+# Applications, System, Library, Extensions, .apps: root:admin rwxrwxr-x
+# kexts, startupitem: root:wheel rwxr-xr-x
+
+umask 0022
+mkdir -p $DESTDIR
+chown root:wheel $DESTDIR
+mkdir -p $DESTDIR/$PREFIX
+
+umask 0002
+chown root:admin $DESTDIR
+chmod 0775 $DESTDIR
+mkdir -p $DESTDIR/Applications/Arla
+mkdir -p "$DESTDIR/Library/Contextual Menu Items"
+mkdir -p $TMPDIR/Arla-$VERSION
+
+umask 0022
+mkdir -p $DESTDIR/Library/StartupItems
+chown root:wheel $DESTDIR/Library/StartupItems
+chmod 0755 $DESTDIR/Library/StartupItems
+
+mkdir -p $DESTDIR/Library/StartupItems/Arla
+chown root:wheel $DESTDIR/Library/StartupItems
+chmod 0755 $DESTDIR/Library/StartupItems
+
+# We want to include a full heimdal install, too
+if [ x"$HEIMDAL_OBJ" != x ] ; then
+    cd "$HEIMDAL_OBJ"
+    make install DESTDIR="$DESTDIR"
+    cd $where
+fi
+
+
+mkdir -p $DESTDIR/$PREFIX/bin/nnpfs.kext
+chown root:wheel $DESTDIR/$PREFIX/bin/nnpfs.kext
+chmod 755 $DESTDIR/$PREFIX/bin/nnpfs.kext
+
+cd $objdir/../..
+make install DESTDIR="$DESTDIR"
+
+
+#The installer happily replaces any files on disk, so we make sure we
+#don't install the real configuration files here, and fix things up in
+#'postflight' script.
+CONFFILES="CellServDB SuidCells arla.conf DynRootDB ThisCell"
+
+cd $DESTDIR/$PREFIX/etc
+rm $CONFFILES
+
+cp -r $SRCDIR/install/Resources $TMPDIR
+
+cd $TMPDIR/Resources
+sed -e "s!%CONFFILES%!$CONFFILES!" postflight.in | \
+sed -e "s!%ETCDIR%!$PREFIX/etc!" > postflight
+chmod +x postflight
+
+
+cd $where
+ln -s $PREFIX/bin/ArlaConfiguration.app $DESTDIR/Applications/Arla
+ln -s $PREFIX/bin/Afslog.app $DESTDIR/Applications/Arla
+ln -s $PREFIX/bin/ArlaCMM.bundle "$DESTDIR/Library/Contextual Menu Items"
+
+cd $objdir
+cp $SRCDIR/install/Arla $DESTDIR/Library/StartupItems/Arla/Arla
+chmod +x $DESTDIR/Library/StartupItems/Arla/Arla
+
+cp $SRCDIR/install/StartupParameters.plist $DESTDIR/Library/StartupItems/Arla/StartupParameters.plist
+
+/Developer/Tools/packagemaker -build -ds -f $DESTDIR -p $TMPDIR/Arla-$VERSION/Arla.pkg -r $TMPDIR/Resources -i install/Info.plist
+
+cd $where
+/usr/bin/hdiutil create -srcfolder $TMPDIR/Arla-$VERSION arla-$VERSION.dmg

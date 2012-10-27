@@ -1,0 +1,48 @@
+# $Id: Makefile.in,v 1.2 2002/06/27 16:19:19 lha Exp $
+
+srcdir		= @srcdir@
+VPATH		= @srcdir@
+
+SHELL		= /bin/sh
+
+SUBDIRS		= gnats release-tools
+
+all:
+		SUBDIRS='$(SUBDIRS)'; \
+		for i in $$SUBDIRS; \
+		do (cd $$i && $(MAKE) $(MFLAGS) $@) || exit 1; done
+
+clean:
+		SUBDIRS='$(SUBDIRS)'; \
+		 for i in $$SUBDIRS; \
+		do (cd $$i && $(MAKE) $(MFLAGS) $@) || exit 1; done
+
+realclean:
+		SUBDIRS='$(SUBDIRS)'; \
+		for i in $$SUBDIRS; \
+		do (cd $$i && $(MAKE) $(MFLAGS) $@) || exit 1; done
+
+distclean:
+		SUBDIRS='$(SUBDIRS)'; \
+		for i in $$SUBDIRS; \
+		do (cd $$i && $(MAKE) $(MFLAGS) $@) || exit 1; done
+
+mostlyclean:
+		SUBDIRS='$(SUBDIRS)'; \
+		for i in $$SUBDIRS; \
+		do (cd $$i && $(MAKE) $(MFLAGS) $@) || exit 1; done
+
+install:
+		SUBDIRS='$(SUBDIRS)'; \
+		for i in $$SUBDIRS; \
+		do (cd $$i && $(MAKE) $(MFLAGS) $@) || exit 1; done
+
+uninstall:
+		SUBDIRS='$(SUBDIRS)'; \
+		for i in $$SUBDIRS; \
+		do (cd $$i && $(MAKE) $(MFLAGS) $@) || exit 1; done
+
+Makefile:	Makefile.in ../config.status
+		cd ..; CONFIG_FILES=tools/Makefile CONFIG_HEADERS= $(SHELL) config.status
+
+.PHONY: all clean realclean distclean mostlyclean install uninstall

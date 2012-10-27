@@ -1,0 +1,60 @@
+#	$Id: Makefile.in,v 1.8 2002/09/07 10:48:25 lha Exp $
+
+SHELL		= /bin/sh
+
+srcdir		= @srcdir@
+top_builddir	= ../../..
+VPATH		= @srcdir@
+
+CC		= @CC@
+RM		= rm
+
+INSTALL		= @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA	= @INSTALL_DATA@
+MKINSTALLDIRS 	= @top_srcdir@/mkinstalldirs
+
+prefix 		= @prefix@
+exec_prefix	= @exec_prefix@
+bindir		= @bindir@
+
+DEFS		= @DEFS@ -DDEBUG
+CFLAGS		= @CFLAGS@
+
+MOUNT_PROG	= mount_nnpfs
+UMOUNT_PROG 	= umount_nnpfs
+
+MOUNT_SRCS	= mount_nnpfs.c
+MOUNT_OBJS	= $(MOUNT_SRCS:.c=.o)
+
+UMOUNT_SRCS	= umount_nnpfs.c
+UMOUNT_OBJS	= $(UMOUNT_SRCS:.c=.o)
+
+PROGS		= $(MOUNT_PROG) $(UMOUNT_PROG)
+
+all:	$(PROGS)
+
+.c.o:
+	$(CC) -c $(CPPFLAGS) $(DEFS) $(CFLAGS) $<
+
+$(MOUNT_PROG): $(MOUNT_OBJS)
+	$(top_builddir)/libtool $(CC) -o $(MOUNT_PROG) $(MOUNT_OBJS)
+
+$(UMOUNT_PROG): $(UMOUNT_OBJS)
+	$(top_builddir)/libtool $(CC) -o $(UMOUNT_PROG) $(UMOUNT_OBJS)
+
+install: all
+	$(MKINSTALLDIRS) $(DESTDIR)$(bindir)
+	for i in $(PROGS); do \
+	  $(INSTALL_PROGRAM) $$i $(DESTDIR)$(bindir)/$$i; \
+	done
+
+uninstall:
+	for i in $(PROGS); do \
+	  rm -f $(DESTDIR)$(bindir)/$$i; \
+	done
+
+clean:
+	$(RM) -f $(PROGS) *.o *~
+
+.PHONY: all install uninstall clean

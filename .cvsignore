@@ -1,0 +1,11 @@
+ID
+configure
+config.h.in
+TAGS
+aclocal.m4
+ltconfig
+ltmain.sh
+ltcf-c.sh
+autom4te*.cache
+compile
+Makefile.in

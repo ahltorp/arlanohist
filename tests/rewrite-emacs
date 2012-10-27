@@ -1,0 +1,10 @@
+#!/bin/sh
+# $Id: rewrite-emacs,v 1.4 2007/11/24 23:44:17 tol Exp $
+if test "X$FAST" != "X" ; then echo "Not running $0" >&4;  exit 0 ; fi
+emacsver=22.1
+gzip -dc ${AFSROOT}/stacken.kth.se/ftp/pub/gnu/emacs/emacs-${emacsver}.tar.gz |
+tar vxf - >&4 2>&1 || exit 1
+find emacs-${emacsver} -size 0 -print | xargs rm || exit 1
+find emacs-${emacsver} -print | xargs chmod u+w || exit 1
+$objdir/truncate-files emacs-${emacsver} || exit 1
+exit 0

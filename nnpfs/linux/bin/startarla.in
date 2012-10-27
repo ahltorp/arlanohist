@@ -1,0 +1,50 @@
+#!/bin/sh
+#
+# A simple startupscript to start arla for Linux
+# 
+# You must have a path that includes, insmod, mknod, 
+# chmod, mount, mkdir and arlad.
+#
+# $Id: startarla.in,v 1.11 2006/12/01 16:49:54 tol Exp $
+#
+
+
+PATH=/sbin:/usr/sbin:/usr/bin:/bin
+LIBEXECDIR=%libexecdir%
+MODULEDIR=%bindir%
+CACHEDIR=%ARLACACHEDIR%
+
+insmod $MODULEDIR/nnpfs.ko
+
+sleep 1
+
+if [ ! -c /dev/nnpfs0 ] ; then
+   echo Creating device /dev/nnpfs0
+   mknod /dev/nnpfs0 c 103 0
+   chmod 600 /dev/nnpfs0
+fi
+
+if [ ! -e $CACHEDIR ] ; then
+   mkdir $CACHEDIR
+   chmod 700 $CACHEDIR
+   chown root $CACHEDIR
+fi
+
+if [ ! -e $CACHEDIR/etc ] ; then
+    mkdir $CACHEDIR/etc
+    chmod 755 $CACHEDIR
+    chown root $CACHEDIR/etc
+fi
+
+if [ -f /etc/resolv.conf ]; then
+    cmp -s /etc/resolv.conf "${CACHEDIR}/etc/resolv.conf" || \
+        cp -p /etc/resolv.conf "${CACHEDIR}/etc/resolv.conf"
+fi
+
+#ulimit -c unlimited
+$LIBEXECDIR/arlad -z
+if [ ! -d /afs ] ; then
+    mkdir /afs
+fi
+sleep 3
+mount -t nnpfs /dev/nnpfs0 /afs

@@ -1,0 +1,85 @@
+# $Id: Makefile.in,v 1.25 2005/10/28 14:33:38 tol Exp $
+
+srcdir		= @srcdir@
+top_builddir	= ..
+VPATH		= @srcdir@
+
+SHELL		= /bin/sh
+INSTALL		= @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA	= @INSTALL_DATA@
+MKINSTALLDIRS 	= @top_srcdir@/mkinstalldirs
+ARLACACHEDIR	= @ARLACACHEDIR@
+ARLACONFFILE	= @ARLACONFFILE@
+CHMOD		= @chmod@
+
+prefix 		= @prefix@
+sysconfdir	= @sysconfdir@
+
+CONF_FILES	= CellServDB ThisCell SuidCells DynRootDB
+
+all: arla.spec arla.conf
+
+install:	all
+		$(MKINSTALLDIRS) $(DESTDIR)$(ARLACACHEDIR)
+		$(CHMOD) 700 $(DESTDIR)$(ARLACACHEDIR)
+		$(MKINSTALLDIRS) $(DESTDIR)$(sysconfdir)
+		@CONF_FILES='$(CONF_FILES)'; \
+		for x in $$CONF_FILES; do \
+		  if test -f $(srcdir)/$$x ; then \
+		    y=$(srcdir)/$$x ; \
+		  else \
+		    y=$$x ; \
+		  fi ; \
+		  echo $(INSTALL_DATA) $$y $(DESTDIR)$(sysconfdir)/$$x.default; \
+		  $(INSTALL_DATA) $$y $(DESTDIR)$(sysconfdir)/$$x.default; \
+		  if test -f $(DESTDIR)$(sysconfdir)/$$x; then \
+		    echo "$@ will not overwrite $(DESTDIR)$(sysconfdir)/$$x"; \
+		  else \
+		    echo $(INSTALL_DATA) $$y $(DESTDIR)$(sysconfdir)/$$x; \
+		    $(INSTALL_DATA) $$y $(DESTDIR)$(sysconfdir)/$$x; \
+		  fi; \
+		done
+		if test -f $(srcdir)/arla.conf ; then \
+		  y=$(srcdir)/arla.conf ; \
+		else \
+		  y=arla.conf ; \
+		fi ; \
+		$(INSTALL_DATA) $$y $(DESTDIR)$(ARLACONFFILE).default; \
+		if test -f $(DESTDIR)$(ARLACONFFILE); then \
+		  echo "$@ will not overwrite $(DESTDIR)$(ARLACONFFILE)"; \
+		else \
+		  echo $(INSTALL_DATA) $$y $(DESTDIR)$(ARLACONFFILE); \
+		  $(INSTALL_DATA) $$y $(DESTDIR)$(ARLACONFFILE); \
+		fi;
+
+
+uninstall:
+		CONF_FILES='$(CONF_FILES)'; \
+		for x in $$CONF_FILES; do \
+		  rm -f $(DESTDIR)$(sysconfdir)/$$x.default; \
+		  rm -f $(DESTDIR)$(sysconfdir)/$$x; \
+		done
+		rm -f $(DESTDIR)$(ARLACONFFILE).default;
+		rm -f $(DESTDIR)$(ARLACONFFILE);
+
+clean:
+		rm -f arla.conf arla.spec
+
+mostlyclean:	clean
+
+distclean:	clean
+		rm -f Makefile
+
+realclean:	distclean
+
+arla.spec:	arla.spec.in ../config.status
+		cd .. ; CONFIG_FILES=conf/arla.spec CONFIG_HEADERS= $(SHELL) ./config.status
+
+arla.conf:	arla.conf.in ../config.status
+		cd .. ; CONFIG_FILES=conf/arla.conf CONFIG_HEADERS= $(SHELL) ./config.status
+
+Makefile:	Makefile.in ../config.status
+		cd .. ; CONFIG_FILES=conf/Makefile CONFIG_HEADERS= $(SHELL) ./config.status
+
+.PHONY: all install uninstall clean mostlyclean distclean realclean

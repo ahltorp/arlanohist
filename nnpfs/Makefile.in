@@ -1,0 +1,20 @@
+# $Id: Makefile.in,v 1.6 2006/10/24 16:32:58 tol Exp $
+
+SHELL		= /bin/sh
+
+@SET_MAKE@
+
+SUBDIRS		= @NNPFS_SUBDIR@ # dummer
+
+all install uninstall clean mostlyclean realclean:
+		SUBDIRS='$(SUBDIRS)'; \
+		for i in $$SUBDIRS; \
+		do (cd $$i && $(MAKE) $(MFLAGS) $@); done
+
+distclean:
+		SUBDIRS='$(SUBDIRS)'; \
+		for i in $$SUBDIRS; \
+		do (cd $$i && $(MAKE) $(MFLAGS) $@); done
+		rm Makefile
+
+.PHONY: all install uninstall clean mostlyclean distclean realclean

@@ -1,0 +1,104 @@
+# $Id: Makefile.in,v 1.17 2003/10/03 17:25:05 map Exp $
+
+#
+# System stuff using SunOS modload(8)
+#
+
+SHELL		= /bin/sh
+
+srcdir		= @srcdir@
+top_builddir	= ../..
+VPATH		= @srcdir@
+
+INSTALL		= @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA	= @INSTALL_DATA@
+MKINSTALLDIRS 	= @top_srcdir@/mkinstalldirs
+
+prefix 		= @prefix@
+exec_prefix	= @exec_prefix@
+libexecdir 	= @libexecdir@
+
+
+# Use "lorder *.o | tsort" to get hints on link order.
+SRC = \
+nnpfs_wrap.c \
+nnpfs_syscalls.c \
+nnpfs_vfsops.c \
+nnpfs_vnodeops.c \
+nnpfs_dev.c \
+nnpfs_message.c \
+nnpfs_node.c \
+nnpfs_deb.c \
+nnpfs_common.c
+
+OBJ = $(SRC:.c=.o)
+SYS = $(shell uname -m)
+MOD = libnnpfs.o
+
+GCCWFLAGS = -Wall -W -Wunused -Wreturn-type -Wcast-qual -Wpointer-arith \
+            -Wwrite-strings -Wcomment -Wswitch -Wshadow -Waggregate-return \
+            -Wformat -Wuninitialized -Wconversion -Wmissing-prototypes \
+            -Winline #-Wcast-align
+GCCWFLAGS = -Wall
+
+CC = cc -sparc
+CC = gcc -g -D__$(SYS)__ $(GCCWFLAGS)
+ARCH = -D$(SYS)
+
+INCLUDES = -I. \
+	   -I$(srcdir) \
+	   -I../../include \
+	   -I$(srcdir)/../../include \
+	   -I$(srcdir)/../include
+
+CFLAGS = $(ARCH) -DKERNEL -DDEBUG -O2 $(INCLUDES)
+
+SUBDIRS = bin
+
+all:	$(MOD) all-subdirs
+
+install: all install-subdirs
+	$(MKINSTALLDIRS) $(DESTDIR)$(libexecdir)
+	$(INSTALL_DATA) $(MOD) $(DESTDIR)$(libexecdir)/$(MOD)
+
+uninstall:
+	rm -f $(DESTDIR)$(libexecdir)/$(MOD)
+
+$(MOD): $(OBJ)
+	ld -r $(OBJ) -o $@
+
+tags:	$(SRC)
+	etags $(SRC)
+
+#
+# Generic cleanup
+#
+
+clean:	clean-subdirs
+	rm -rf core *~ *.o $(MOD)
+
+distclean: clean
+	rm -f Makefile
+
+all-subdirs:
+	SUBDIRS='$(SUBDIRS)'; \
+	for i in $$SUBDIRS; \
+	do (cd $$i && $(MAKE) $(MFLAGS) all); done
+
+install-subdirs:
+	SUBDIRS='$(SUBDIRS)'; \
+	for i in $$SUBDIRS; \
+	do (cd $$i && $(MAKE) $(MFLAGS) install); done
+
+uninstall-subdirs:
+	SUBDIRS='$(SUBDIRS)'; \
+	for i in $$SUBDIRS; \
+	do (cd $$i && $(MAKE) $(MFLAGS) uninstall); done
+
+clean-subdirs:
+	SUBDIRS='$(SUBDIRS)'; \
+	for i in $$SUBDIRS; \
+	do (cd $$i && $(MAKE) $(MFLAGS) clean); done
+
+.PHONY: all install uninstall clean realclean all-subdirs install-subdirs clean-subdirs uninstall-subdirs

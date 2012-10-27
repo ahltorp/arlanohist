@@ -1,0 +1,19 @@
+{
+    IBClasses = (
+        {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }, 
+        {
+            ACTIONS = {authenticate = id; editcell = id; unlog = id; }; 
+            CLASS = mafslog; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {
+                progress = id; 
+                tokenTable = id; 
+                tokenTableCell = id; 
+                tokenTableExpire = id; 
+                tokenTableStatus = id; 
+            }; 
+            SUPERCLASS = NSObject; 
+        }
+    ); 
+    IBVersion = 1; 
+}

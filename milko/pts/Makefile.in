@@ -1,0 +1,120 @@
+# $Id: Makefile.in,v 1.22 2005/04/06 20:30:34 tol Exp $
+
+srcdir		= @srcdir@
+top_builddir	= ../..
+VPATH		= @srcdir@
+
+CC		= @CC@
+
+INSTALL		= @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA	= @INSTALL_DATA@
+MKINSTALLDIRS 	= @top_srcdir@/mkinstalldirs
+
+prefix 		= @prefix@
+exec_prefix 	= @exec_prefix@
+libdir 		= @libdir@
+libexecdir 	= @libexecdir@
+bindir 		= @bindir@
+sysconfdir	= @sysconfdir@
+transform	= @program_transform_name@
+
+PTSERVER_BIN	= ptserver
+
+DEFS		= @DEFS@ -DMILKO_SYSCONFDIR=\"$(sysconfdir)\"
+
+SHELL		= /bin/sh
+
+CFLAGS		= @CFLAGS@
+LDFLAGS		= @LDFLAGS@
+
+ETAGS		= etags
+MAKEDEPEND	= makedepend
+AFSWSROOT	= /usr/afsws
+RXKADINC	= -I$(srcdir)/../rxkad
+INCLUDES	= -I$(srcdir)/../.. \
+		  -I../../include \
+		  -I$(srcdir)/../../include \
+		  -I$(srcdir)/../lib/mlog \
+		  -I$(srcdir)/../lib/mdb \
+		  -I$(srcdir)/../../rxkad \
+		  -I$(srcdir)/../lib/msecurity \
+		  -I../../rxdef \
+		  @INC_roken@ \
+		  $(RXKADINC)
+DEFINES		= -DDEBUG
+REALCFLAGS	= $(INCLUDES) @KRB5_INC_FLAGS@ $(DEFINES) $(CFLAGS) -DRXDEBUG
+RXKADLIB	= @RXKAD_LIBS@
+KAFS_LIBS	= @AIX_EXTRA_KAFS@ @KAFS_LIBS@
+DBLIB		= @DBLIB@
+LIBS		= -L../lib/msecurity -lmsecurity \
+		  -L../../rxdef -lrxfsserver \
+		  -L../lib/mlog -lmlog \
+		  -L../lib/mdb -lmdb \
+		  ../../lib/ko/libko.la ../../util/libarlautil.la \
+		  -L../../rxdef -lptserver -L../../rx -lrx \
+		  -L../../lwp -llwp @PLWP_LIB_FLAGS@ \
+		  $(RXKADLIB) $(DBLIB) \
+		  $(KAFS_LIBS) \
+		  @LIB_roken@ \
+		  @LIBS@
+LIBDEPENDS	= ../../rxdef/librxdefclient.la ../../rx/librx.la \
+		  ../../lwp/liblwp.a ../../util/libarlautil.la \
+		  ../../lib/ko/libko.la \
+		  ../lib/voldb/libvoldb.a ../lib/vld/libvld.a \
+		  ../lib/msecurity/libmsecurity.a ../lib/mdb/libmdb.a
+PROGS		= ptserver
+SRCS		=				\
+		ptserver.c			\
+		pr.c
+
+HDRS		= 
+
+ptserver_OBJS	=				\
+		ptserver.o			\
+		pr.o
+
+.PHONY: all install uninstall depend tags clean
+
+all:		$(PROGS)
+
+.c.o:
+		$(CC) -c $(CPPFLAGS) $(DEFS) -I$(srcdir) -I. $(REALCFLAGS) $<
+
+install: all
+		$(MKINSTALLDIRS) $(DESTDIR)$(libexecdir)
+		PROG_BIN='$(PTSERVER_BIN)'; for x in $$PROG_BIN; do \
+			f=`echo $$x | sed '$(transform)'`; \
+			$(INSTALL_PROGRAM) $$x $(DESTDIR)$(libexecdir)/$$f; \
+		done
+
+uninstall:
+		PROG_BIN='$(PTSERVER_BIN)'; for x in $$PROG_BIN; do \
+			f=`echo $$x | sed '$(transform)'`; \
+			rm -f $(DESTDIR)$(libexecdir)/$$f; \
+		done
+
+ptserver:	$(ptserver_OBJS) $(LIBDEPENDS)
+		$(top_builddir)/libtool $(CC) $(LDFLAGS) -o $@ $(ptserver_OBJS) $(LIBS)
+
+Makefile:	Makefile.in ../../config.status
+		cd ../..; CONFIG_FILES=milko/pts/Makefile CONFIG_HEADERS= $(SHELL) config.status
+
+depend:		$(SRCS)
+		$(MAKEDEPEND) -- $(REALCFLAGS) -- $^
+
+tags:		TAGS
+
+TAGS:		$(SRCS) $(HDRS)
+		$(ETAGS) -t $(SRCS) $(HDRS)
+
+clean		:
+		rm -f $(PROGS) $(OBJS) *~ *.o core *.core
+
+mostlyclean:	clean
+
+distclean:	clean
+		rm -f Makefile config.status
+
+realclean:	distclean
+		rm -f TAGS

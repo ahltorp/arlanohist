@@ -1,0 +1,4 @@
+#!/bin/sh
+# $Id: large-dir-16384,v 1.4 2002/05/07 16:21:09 lha Exp $
+if test "X$FAST" != "X" ; then echo "Not running $0" >&4;  exit 0 ; fi
+$objdir/large-dir large-dir-16384 16384

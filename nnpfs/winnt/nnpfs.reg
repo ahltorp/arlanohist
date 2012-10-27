@@ -1,0 +1,57 @@
+REGEDIT4
+
+;; $Id: nnpfs.reg,v 1.8 2002/09/07 10:48:47 lha Exp $
+;;
+;; This defines the driver to load
+;;
+;; It takes the name (nnpfs) and tries to load the image
+;;    %Systemroot%/System32/drivers/nnpfs.sys, this can be overridden by
+;;    the option ImagePath.
+;; ErrorControl -> error is logged when device fails loading.
+;; Group -> what group the driver belongs too. Could be "File System",
+;;    or in case of a network redirector "Network Provider".
+;; Start -> when to start driver, 0x1 ..., 0x2 automagic start, 
+;;    0x3 manual-start only
+;; Type -> 0x2 - filesystem
+
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\NNPFS]
+"ErrorControl"=dword:00000001
+"Group"="File System"
+"Start"=dword:00000003
+"Type"=dword:00000002
+
+;; Maps the device in the object tree from the \filesystem\nnpfs device
+;; to the driver Z:. The same thing can be accomplished with
+;; IoCreateSymlink(DDK) (or something like that) in the object tree.
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Dos Devices]
+"X:"="\\Device\NNPFS"
+
+;; [HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\EventLog\System\NNPFS]
+;; EventMessageFile="%Systemroot%/System32/drivers/nnpfs.sys"
+;; ;; Where the event log message are stored
+;; TypeSupported=0x7
+;; ;; Bitmask of what errormessage are logged
+
+;; Version fluff
+;; Not really used.
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\KTH\NNPFS]
+"VendorName"="KTH, Sweden"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\KTH\NNPFS\CurrentVersion]
+"VersionMajor"="0"
+"VersionMinor"="33"
+"VersionBuild"="N/A"
+"VersionDate"="N/A"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\KTH\Arla]
+"VendorName"="KTH, Sweden"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\KTH\NNPFS\Arla]
+"VersionMajor"="0"
+"VersionMinor"="33"
+"VersionBuild"="N/A"
+"VersionDate"="N/A"
+

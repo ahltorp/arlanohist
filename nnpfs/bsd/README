@@ -1,0 +1,6 @@
+Things to keep in mind about nnpfs/bsd/:
+
+nnpfs_vfsops-common.c (nnpfs_mount_common_sys):
+emulate vfs_setlocklocal() on MacOS X so we can support locking
+without reimplementing half the OS. Very ugly and unsafe hack. It
+should be removed as soon as we have a decent alternative.
