@@ -838,6 +838,11 @@ nnpfs_aio_read(struct kiocb *iocb,
 	NNPFSDEB(XDEBVNOPS, ("nnpfs_read_file(%p): tokens: 0x%x\n",
 			     inode, xn->tokens));
 
+    if (pos >= i_size_read(inode)) {
+	NNPFSDEB(XDEBVNOPS, ("nnpfs_read_file: read past EOF\n"));
+	return 0;      
+    }
+
     error = nnpfs_data_valid(inode, NNPFS_DATA_R, pos, pos + count);
     if (error) {
 	NNPFSDEB(XDEBVNOPS, ("nnpfs_read_file: data not valid %d\n", error));
