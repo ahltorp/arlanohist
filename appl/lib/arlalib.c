@@ -191,7 +191,6 @@ get_cred5(const char *princ, const char *inst, const char *krealm,
     return ret;
 }
 
-#endif /* HAVE_KRB5 */
 
 static int
 arlalib_get_cred_krb (const char *cell, const char *host, 
@@ -339,6 +338,7 @@ arlalib_get_cred_afs (const char *cell,
     return ret;
 }
 
+#endif /* HAVE_KRB5 */
 
 int
 arlalib_getservername(uint32_t serverNumber, char **servername)
@@ -366,6 +366,7 @@ arlalib_getsecurecontext(const char *cell, const char *host,
 {
     struct rx_securityClass* sec = NULL;
 
+#ifdef KERBEROS
     if (auth) {
 	int ret;
 	struct ClearToken ct;
@@ -397,6 +398,7 @@ arlalib_getsecurecontext(const char *cell, const char *host,
 		    cell ? cell : cell_getthiscell());
 	}
     }
+#endif
 
     if (sec == NULL) {
 	sec = rxnull_NewClientSecurityObject();
@@ -406,6 +408,7 @@ arlalib_getsecurecontext(const char *cell, const char *host,
     return sec;
 }
 
+#ifdef KERBEROS
 int
 arlalib_getcred(const char *cell,
 		struct ClearToken *ct,
@@ -427,7 +430,7 @@ arlalib_getcred(const char *cell,
 				    AUTHFLAGS_ANY);
     return ret;
 }
-
+#endif
 
 struct rx_connection *
 arlalib_getconnbyaddr(const char *cell, int32_t addr,

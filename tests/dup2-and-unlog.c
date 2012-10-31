@@ -9,9 +9,10 @@
 #include <err.h>
 #include <roken.h>
 #include <atypes.h>
-#include <kafs.h>
 
 #ifdef KERBEROS
+
+#include <kafs.h>
 
 int
 main(int argc, char **argv)

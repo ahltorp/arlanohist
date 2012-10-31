@@ -45,7 +45,9 @@
 #include <dirent.h>
 #include <fs.h>
 #include <arlalib.h>
+#ifdef KERBEROS
 #include <kafs.h>
+#endif
 
 #include <err.h>
 #include <roken.h>

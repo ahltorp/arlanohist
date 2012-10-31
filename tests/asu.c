@@ -47,7 +47,9 @@ RCSID("$Id: asu.c,v 1.10 2006/02/07 21:12:09 lha Exp $");
 
 #include <atypes.h>
 
+#ifdef KERBEROS
 #include <kafs.h>
+#endif
 
 #include <err.h>
 

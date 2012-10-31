@@ -54,7 +54,9 @@
 #include <atypes.h>
 
 #include <arla-pioctl.h>
+#ifdef KERBEROS
 #include <kafs.h>
+#endif
 
 #include <roken.h>
 

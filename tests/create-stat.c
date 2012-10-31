@@ -46,7 +46,9 @@
 
 #include <atypes.h>
 
+#ifdef KERBEROS
 #include <kafs.h>
+#endif
 
 #include <fs.h>
 #include <arlalib.h>

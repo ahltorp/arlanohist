@@ -408,6 +408,7 @@ add_connection(int32_t cell,
 	cred = ce->cred;
 
 	switch (ce->type) {
+#ifdef KERBEROS
 	case CRED_RXGK : {
 	    struct cred_rxgk *cred = (struct cred_rxgk *)ce->cred_data;
 	    unsigned char *base = (unsigned char *)ce->cred_data;
@@ -425,6 +426,7 @@ add_connection(int32_t cell,
 						       &ticket, &key);
 	    break;
 	}
+#endif
 #ifdef KERBEROS
 	case CRED_KRB4 : {
 	    struct cred_rxkad *cred = (struct cred_rxkad *)ce->cred_data;

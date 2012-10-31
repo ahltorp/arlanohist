@@ -74,8 +74,10 @@ static int arla_checkserver(int, char **);
 static int arla_conn_status(int, char **);
 static int arla_connect(int, char **);
 static int arla_vol_status(int, char **);
+#ifdef KERBEROS
 static int arla_tokens(int, char **);
 static int arla_afslog(int, char **);
+#endif
 static int arla_fcache_status(int, char **);
 static int arla_cell_status (int, char **);
 static int arla_sysname(int, char**);
@@ -116,8 +118,10 @@ static SL_cmd cmds[] = {
     {"checkservers", arla_checkserver, "poll servers are down"},
     {"conn-status", arla_conn_status, "connection status"},
     {"vol-status", arla_vol_status, "volume cache status"},
+#ifdef KERBEROS
     {"tokens", arla_tokens, "credentials status"},
     {"afslog", arla_afslog, "get credentials"},
+#endif
     {"fcache-status", arla_fcache_status, "file cache status"},
     {"cell-status", arla_cell_status, "cell status"},
 #ifdef RXDEBUG
@@ -1503,6 +1507,7 @@ print_cred(CredCacheEntry *ce)
     return FALSE;
 }
 
+#ifdef KERBEROS
 static int
 arla_tokens (int argc, char **argv)
 {
@@ -1551,7 +1556,7 @@ arla_afslog (int argc, char **argv)
 
     return 0;
 }
-
+#endif
 
 static int
 arla_fcache_status (int argc, char **argv)
@@ -2215,6 +2220,7 @@ arla_start (char *device_file, const char *cache_dir, int argc, char **argv)
     }
 #endif
 
+#ifdef HAVE_KRB5
     {
 	struct cred_rxkad cred;
 	struct ClearToken ct;
@@ -2238,6 +2244,7 @@ arla_start (char *device_file, const char *cache_dir, int argc, char **argv)
 	
 	}
     }
+#endif
     
     CredCacheEntry *ce;
     ce = cred_get (cell_name2num(cell_getthiscell()), getuid(), CRED_ANY);

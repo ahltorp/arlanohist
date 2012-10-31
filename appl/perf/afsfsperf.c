@@ -928,6 +928,7 @@ main (int argc, char **argv)
 	auth = AUTHFLAGS_NOAUTH;
 	auth_string = "clear";
 	break;
+#ifdef KERBEROS
     case 2:
 	auth = AUTHFLAGS_TICKET;
 	auth_string = "auth";
@@ -938,6 +939,7 @@ main (int argc, char **argv)
 	auth_string = "crypt";
 	rxkad_min_level = rxkad_crypt;
 	break;
+#endif
     default:
 	errx (1, "authlevel: only 1, 2 or 3 is valid (clear, auth, crypt)");
     }

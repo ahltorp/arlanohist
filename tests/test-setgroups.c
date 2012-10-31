@@ -46,7 +46,9 @@
 #include <roken.h>
 
 #include <atypes.h>
+#ifdef KERBEROS
 #include <kafs.h>
+#endif
 
 #ifdef RCSID
 RCSID("$Id: test-setgroups.c,v 1.7 2002/07/15 12:45:38 lha Exp $");

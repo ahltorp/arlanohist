@@ -47,7 +47,9 @@
 #include <roken.h>
 
 #include <atypes.h>
+#ifdef KERBEROS
 #include <kafs.h>
+#endif
 
 #ifdef RCSID
 RCSID("$Id: test-setpag.c,v 1.6 2002/07/15 12:45:39 lha Exp $");

@@ -45,7 +45,9 @@
 #include <roken.h>
 
 #include <atypes.h>
+#ifdef KERBEROS
 #include <kafs.h>
+#endif
 
 #ifdef RCSID
 RCSID("$Id: test-parallel1.c,v 1.4 2002/07/15 12:45:36 lha Exp $");

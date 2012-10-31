@@ -73,16 +73,18 @@ int arlalib_getservername(uint32_t serverNumber, char **servername);
 struct rx_securityClass*
 arlalib_getsecurecontext(const char *cell, const char *host, 
 			 arlalib_authflags_t auth, int *secidx);
+#ifdef HAVE_KRB5
 int
 arlalib_getcred(const char *cell,
 		struct ClearToken *ct,
 		unsigned char *ticket,
 		size_t ticket_len,
 		size_t *ticket_len_out);
+#endif
 int arlalib_getsyncsite(const char *cell, const char *host, int32_t port, 
 			uint32_t *synchost, arlalib_authflags_t auth);
 
-
+#ifdef HAVE_KRB5
 /*
  * Token management
  */
@@ -97,7 +99,7 @@ typedef int (*arlalib_token_iter_func) (const char *secret, size_t secret_sz,
 int
 arlalib_token_iter (const char *cell, 
 		    arlalib_token_iter_func func, void *arg);
-
+#endif
 
 /*
  * Wrappers around pioctl calls

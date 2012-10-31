@@ -35,6 +35,7 @@
 
 RCSID("$Id: tokens.c,v 1.10 2005/11/17 15:44:55 tol Exp $");
 
+#ifdef HAVE_KRB5
 /*
  * Iterate over all tokens and apply `func' on all of them, passing
  * the user argument `arg' to func. If `cell' is used, only the token
@@ -111,3 +112,4 @@ arlalib_token_iter (const char *cell, arlalib_token_iter_func func, void *arg)
 	return ENOENT;
     return 0;
 }
+#endif
