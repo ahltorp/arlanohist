@@ -158,8 +158,8 @@ get_cred5(const char *princ, const char *inst, const char *krealm,
 	goto out;
 
     memset(&in_creds, 0, sizeof(in_creds));
-    ret = krb5_425_conv_principal(context, princ, inst, krealm,
-				  &in_creds.server);
+    ret = krb5_make_principal(context, &in_creds.server,
+			      krealm, princ, inst, NULL);
     if(ret)
 	goto out;
 
