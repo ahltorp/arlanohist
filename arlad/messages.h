@@ -85,4 +85,10 @@ int set_connmode(int32_t mode, nnpfs_cred *cred);
 void
 message_init(void);
 
+void
+afsstatus2nnpfs_attr (AFSFetchStatus *status,
+		      const VenusFid *fid,
+		      struct nnpfs_attr *attr,
+		      int flags);
+
 #endif /* _MESSAGES_H_ */

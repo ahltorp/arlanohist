@@ -41,7 +41,7 @@
 
 #define FUSE_USE_VERSION 26
 #define _FILE_OFFSET_BITS 64
-#include <fuse.h>
+#include <fuse/fuse_lowlevel.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -71,6 +71,34 @@ struct ptscache_entry {
     int32_t id;
     char *name;
 };
+
+struct arla_fuse_node {
+  int type;
+  VenusFid fid;
+};
+
+static struct arla_fuse_node *nodelist;
+static int nodelist_size;
+static int nodelist_next;
+
+static int
+add_to_nodelist(VenusFid fid, int type)
+{
+  if (nodelist_next >= nodelist_size) {
+    int old_nodelist_size = nodelist_size;
+    nodelist_size *= 2;
+    nodelist = realloc(nodelist, nodelist_size);
+    memset(&nodelist[old_nodelist_size], 0, (nodelist_size - old_nodelist_size) * sizeof(*nodelist));
+  }
+
+  int nodenr = nodelist_next;
+
+  nodelist[nodenr].fid = fid;
+  nodelist[nodenr].type = type;
+  nodelist_next++;
+
+  return nodenr;
+}
 
 static int
 ptscachecmp (void *a, void *b)
@@ -141,6 +169,11 @@ arla_start(char *device_file, const char *cache_dir)
 	    arla_err (1, ADEBERROR, error, "getroot");
     cred_free(ce);
     cwd = rootcwd;
+    nodelist_size = 1024;
+    nodelist = calloc(nodelist_size, sizeof(*nodelist));
+    nodelist_next = 2;
+    nodelist[1].fid = rootcwd;
+    nodelist[1].type = TYPE_DIR;
     error = 0;
 }
 
@@ -166,254 +199,372 @@ get_default_cache_dir (void)
     return cache_path;
 }
 
-static int
-getentry(const char *path, FCacheEntry **entry, CredCacheEntry **ce)
+static void
+set_nnpfsattr(struct stat *attr, struct nnpfs_attr *nnpfs_attr)
 {
-    int error;
-    VenusFid fid;
-
-    error = cm_walk(rootcwd, path, &fid);
-    if (error) {
-	printf("cm_walk: %s\n", koerr_gettext(error));
-	return -EIO; /* XXX */
-    }
-
-    *ce = cred_get(fid.Cell, getuid() /* XXX */, CRED_ANY);
-    error = fcache_get(entry, fid, *ce);
-    if (error) {
-	printf ("fcache_get failed: %s\n", koerr_gettext(error));
-	cred_free(*ce);
-	return -EIO; /* XXX */
-    }
-    return 0;
+  memset(attr, 0, sizeof(*attr));
+  attr->st_ino = nnpfs_attr->xa_fileid;
+  attr->st_mode = nnpfs_attr->xa_mode;
+  attr->st_size = nnpfs_attr->xa_size;
+  attr->st_nlink = nnpfs_attr->xa_nlink;
+  attr->st_uid = nnpfs_attr->xa_uid;
+  attr->st_gid = nnpfs_attr->xa_gid;
+  attr->st_atime = nnpfs_attr->xa_atime;
+  attr->st_mtime = nnpfs_attr->xa_mtime;
+  attr->st_ctime = nnpfs_attr->xa_ctime;
 }
 
-/*
- * FCacheEntry -> struct stat
- */
+static int
+get_entry(fuse_ino_t ino, CredCacheEntry **ce, FCacheEntry **entry, int getattrp) {
+  assert(ino < nodelist_next);
+
+  struct arla_fuse_node *node = &nodelist[ino];
+  VenusFid fid = node->fid;
+  int ret;
+
+  *ce = cred_get (fid.Cell, getuid() /* XXX */, CRED_ANY);
+  
+  ret = fcache_get(entry, fid, *ce);
+  if (ret) {
+    return ret;
+  }
+  
+  if (getattrp) {
+    ret = cm_getattr(*entry, *ce);
+    if (ret) {
+      arla_warnx(ADEBMSG, "cm_getattr failed: %s", koerr_gettext(ret));
+      fcache_release(*entry);
+      *entry = NULL;
+      return ret;
+    }
+  }
+
+  return 0;
+}
+
+static int
+try_again (int *ret, CredCacheEntry **ce, const VenusFid *fid)
+{
+  return FALSE;
+}
 
 static void
-entry2stat(FCacheEntry *entry, struct stat *stbuf)
+arla_ll_lookup(fuse_req_t req, fuse_ino_t parent, const char *name)
 {
-    AFSFetchStatus *status = &entry->status;
-    int mode;
+  arla_warnx (ADEBMSG, "arla_ll_lookup %llu %s", (long long unsigned) parent, name);
 
-    switch (status->FileType) {
-    case TYPE_FILE :
-	mode = S_IFREG;
-	break;
-    case TYPE_DIR :
-	mode = S_IFDIR;
-	break;
-    case TYPE_LINK :
-	mode = S_IFLNK;
-	break;
-    default :
-	arla_warnx(ADEBMSG, "afsstatus2stat: default");
-	abort();
-    }
-    stbuf->st_nlink = status->LinkCount;
-    stbuf->st_size = fcache_get_status_length(status);
-    stbuf->st_uid = status->Owner;
-    stbuf->st_gid = status->Group;
-    stbuf->st_atime = status->ClientModTime;
-    stbuf->st_mtime = status->ClientModTime;
-    stbuf->st_ctime = status->ClientModTime;
-    stbuf->st_ino = afsfid2inode(&entry->fid);
+  CredCacheEntry *ce;
+  int ret;
+  FCacheEntry *dentry = NULL;
 
-    /* XXX this is wrong, need to keep track of `our` ae for this req */
-    if (fake_stat) {
-	nnpfs_rights rights;
-	
-	rights = afsrights2nnpfsrights(status->CallerAccess,
-				       status->FileType,
-				       status->UnixModeBits);
-	
-	if (rights & NNPFS_RIGHT_R)
-	    mode |= 0444;
-	if (rights & NNPFS_RIGHT_W)
-	    mode |= 0222;
-	if (rights & NNPFS_RIGHT_X)
-	    mode |= 0111;
-    } else
-	mode |= status->UnixModeBits;
+  ret = get_entry(parent, &ce, &dentry, 0);
 
-    stbuf->st_mode = mode;
+  if (ret) {
+    goto out;
+  }
+
+  arla_warnx (ADEBMSG, "arla_ll_lookup dirfid %d.%d.%d.%d", dentry->fid.Cell, dentry->fid.fid.Volume, dentry->fid.fid.Vnode, dentry->fid.fid.Unique);
+
+  VenusFid fid;
+  VenusFid dirfid;
+  VenusFid real_fid;
+  FCacheEntry *entry = NULL;
+  AFSFetchStatus status;
+
+  do {
+    ret = cm_lookup (&dentry, name, &fid, &ce, TRUE);
+    dirfid = dentry->fid;
+  } while (try_again (&ret, &ce, &dirfid));
+  
+  if (ret) {
+    goto out;
+  }
+  
+  fcache_release(dentry);
+  dentry = NULL;
+  
+  ret = fcache_get(&entry, fid, ce);
+  if (ret) {
+    goto out;
+  }
+  
+  do {
+    ret = cm_getattr(entry, ce);
+    status = entry->status;
+    real_fid = *fcache_realfid(entry);
+  } while (try_again (&ret, &ce, &fid));
+
+  if (ret) {
+    goto out;
+  }
+
+  int nodenr = add_to_nodelist(fid, status.FileType);
+  
+  struct fuse_entry_param e;
+
+  struct nnpfs_attr attr;
+
+  afsstatus2nnpfs_attr (&status, &real_fid, &attr, FCACHE2NNPFSNODE_ALL);
+
+  memset(&e, 0, sizeof(e));
+  e.ino = nodenr;
+  e.generation = 1;
+  e.attr_timeout = 10000;
+  e.entry_timeout = 10000;
+  set_nnpfsattr(&e.attr, &attr);
+  fuse_reply_entry(req, &e);
+
+ out:
+  if (ret) {
+    fuse_reply_err(req, ENOENT);
+  }
+  if (entry) {
+    fcache_release(entry);
+  }
+  if (dentry) {
+    fcache_release(dentry);
+  }
+  cred_free (ce);
+  return;
 }
 
-static int
-arla_getattr(const char *path, struct stat *stbuf)
+static void
+arla_ll_getattr(fuse_req_t req, fuse_ino_t ino,
+		  struct fuse_file_info *fi)
 {
-    int error;
-    FCacheEntry *entry;
-    CredCacheEntry *ce;
+  arla_warnx (ADEBMSG, "arla_ll_getattr %llu", (long long unsigned) ino);
 
-    /* printf("getattr(%s)\n", path); */
+  CredCacheEntry *ce;
+  int ret;
+  FCacheEntry *entry = NULL;
 
-    error = getentry(path, &entry, &ce);
-    if (error)
-	return error;
+  ret = get_entry(ino, &ce, &entry, 1);
 
-    error = cm_getattr(entry, ce);
-    if (error) {
-	fcache_release(entry);
-	printf ("cm_getattr failed: %s\n", koerr_gettext(error));
-	cred_free(ce);
-	return -EIO; /* XXX */
-    }
-    
-    memset(stbuf, 0, sizeof(struct stat));
-    entry2stat(entry, stbuf);
+  if (ret) {
+    goto out;
+  }
 
+  AFSFetchStatus status;
+
+  arla_warnx (ADEBMSG, "arla_ll_getattr fid %d.%d.%d.%d", entry->fid.Cell, entry->fid.fid.Volume, entry->fid.fid.Vnode, entry->fid.fid.Unique);
+
+  status = entry->status;
+
+  struct stat attr;
+
+  struct nnpfs_attr nnpfs_attr;
+
+  afsstatus2nnpfs_attr (&status, &entry->fid, &nnpfs_attr, FCACHE2NNPFSNODE_ALL);
+
+  set_nnpfsattr(&attr, &nnpfs_attr);
+  fuse_reply_attr(req, &attr, 10000);
+ out:
+  if (ret) {
+    fuse_reply_err(req, ENOENT);
+  }
+  if (entry) {
     fcache_release(entry);
-    cred_free(ce);
+  }
+  cred_free (ce);
 
-    return 0;
+  return;
 }
 
 struct readdir_context {
-    fuse_fill_dir_t filler;
-    void *buf;
+  off_t offset;
+  off_t start_offset;
+  char *buf;
+  size_t bytes_left;
+  fuse_req_t req;
 };
 
 static int
 readdir_func(VenusFid *fid, const char *name, void *v)
 {
-    struct readdir_context *context = (struct readdir_context *)v;
+  struct readdir_context *context = (struct readdir_context *)v;
 
-    return context->filler(context->buf, name, NULL, 0);
+  context->offset+=1;
+
+  struct stat st = {
+    .st_ino = context->offset,
+    .st_mode = 0/*S_IFREG*/,
+  };
+
+  if (context->offset > context->start_offset) {
+    size_t entry_size = fuse_add_direntry(context->req, context->buf, context->bytes_left, name, &st, context->offset);
+    
+    if (entry_size > context->bytes_left) {
+      return -1;
+    }
+    context->bytes_left -= entry_size;
+    context->buf += entry_size;
+    return 0;
+  }
+  
+  return 0;
 }
 
-static int
-arla_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
-	     off_t offset, struct fuse_file_info *fi)
+
+
+static void
+arla_ll_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
+		off_t off, struct fuse_file_info *fi)
 {
-    int error;
-    FCacheEntry *entry;
-    CredCacheEntry *ce;
+  arla_warnx (ADEBMSG, "arla_ll_readdir %lu %zu %zd", ino, size, off);
+
+  CredCacheEntry *ce;
+  int ret;
+  FCacheEntry *entry;
+  ret = get_entry(ino, &ce, &entry, 1);
+
     struct readdir_context context;
 
-    /* printf("readdir(%s)\n", path); */
-
-    error = getentry(path, &entry, &ce);
-    if (error)
-	return error;
-
-    error = cm_getattr(entry, ce);
-    if (error) {
-	fcache_release(entry);
-	printf ("cm_getattr failed: %s\n", koerr_gettext(error));
-	cred_free(ce);
-	return -EIO;
+    if (ret) {
+      goto out;
     }
     
     if (entry->status.FileType != TYPE_DIR) {
 	fcache_release(entry);
 	printf("readdir: not a directory\n");
-	cred_free(ce);
-	return -EISDIR;
+	fuse_reply_err(req, ENOTDIR);
+	ret = 0; // XXX: prevent another reply
+	goto out;
     }
 
-    context.filler = filler;
+    char *buf = calloc(size, 1);
+
+    context.offset = 0;
+    context.start_offset = off;
     context.buf = buf;
-    error = adir_readdir(&entry, readdir_func, &context, &ce);
+    context.bytes_left = size;
+    context.req = req;
+    ret = adir_readdir(&entry, readdir_func, &context, &ce);
 
-    fcache_release(entry);
-    cred_free(ce);
-
-    if (error) {
-	printf ("adir_readdir failed: %s\n", koerr_gettext(error));
-	return -EIO;
-    }
-
-    return 0;
-}
-
-static int
-arla_open(const char *path, struct fuse_file_info *fi)
-{
-    /* printf("open(%s)\n", path); */
-    return 0;
-}
-
-static int
-arla_read(const char *path, char *buf, size_t size, off_t offset,
-	  struct fuse_file_info *fi)
-{
-    FCacheEntry *entry;
-    CredCacheEntry *ce;
-    size_t len;
-    int error;
-
-    /* printf("read(%s)\n", path); */
-
-    error = getentry(path, &entry, &ce);
-    if (error)
-	return error;
-
-    error = cm_getattr(entry, ce);
-    if (error) {
-	fcache_release(entry);
-	printf ("cm_getattr failed: %s\n", koerr_gettext(error));
-	cred_free(ce);
-	return -EIO;
+    if (ret) {
+	printf ("adir_readdir failed: %s\n", koerr_gettext(ret));
+	goto out;
     }
     
-    error = cm_open(entry, ce, NNPFS_DATA_R); /* XXX */
-    if (error) {
-	fcache_release(entry);
-	printf ("cm_open failed: %s\n", koerr_gettext(error));
-	cred_free(ce);
-	return -EIO;
-    }
+    fuse_reply_buf(req, buf, size - context.bytes_left);
+    arla_warnx (ADEBMSG, "arla_readdir %lu reply %zu bytes", ino, size - context.bytes_left);
 
-    if (entry->status.FileType != TYPE_FILE) {
-	fcache_release(entry);
-	printf("read: not a file\n");
-	cred_free(ce);
-	return -EISDIR;
-    }
-
-    len = fcache_get_status_length(&entry->status);
-
-    if (offset < len) {
-	fbuf f;
-
-        if (offset + size > len)
-            size = len - offset;
-
-	error = fcache_get_data(&entry, &ce, 0, len); /* XXX use req */
-	if (error) {
-	    fcache_release(entry);
-	    printf ("fcache_get_data failed: %s\n", koerr_gettext(error));
-	    cred_free(ce);
-	    return -EIO;
-	}
-
-	error = fcache_get_fbuf(entry, &f, FBUF_READ);
-	if (!error) {
-	    memcpy(buf, (char *)fbuf_buf(&f) + offset, size);
-	    abuf_end(&f);
-	}
-    } else
-        size = 0;
-
+ out:
+  if (ret) {
+    fuse_reply_err(req, ENOENT);
+  }
+  if (buf) {
+    free(buf);
+  }
+  if (entry) {
     fcache_release(entry);
-    cred_free(ce);
+  }
+  cred_free (ce);
 
-    if (error) {
-	printf ("fcache_get_fbuf failed: %s\n", koerr_gettext(error));
-	return -EIO;
-    }
-
-    return size;
+  return;
 }
 
-static struct fuse_operations arla_oper = {
-    .getattr    = arla_getattr,
-    .readdir    = arla_readdir,
-    .open       = arla_open,
-    .read       = arla_read,
+static void
+arla_ll_open(fuse_req_t req, fuse_ino_t ino,
+               struct fuse_file_info *fi)
+{
+  arla_warnx (ADEBMSG, "arla_ll_open %llu", (long long unsigned) ino);
+
+  CredCacheEntry *ce;
+  int ret;
+  FCacheEntry *entry;
+  ret = get_entry(ino, &ce, &entry, 1);
+
+  if (ret) {
+    goto out;
+  }
+
+  fuse_reply_open(req, fi);
+
+ out:
+  if (ret) {
+    fuse_reply_err(req, EINVAL);
+  }
+  if (entry) {
+    fcache_release(entry);
+  }
+  cred_free (ce);
+}
+
+static void
+arla_ll_read(fuse_req_t req, fuse_ino_t ino, size_t size,
+               off_t offset, struct fuse_file_info *fi)
+{
+  arla_warnx (ADEBMSG, "arla_ll_read %lu %zu %zd", ino, size, offset);
+
+  CredCacheEntry *ce;
+  int ret;
+  FCacheEntry *entry;
+  ret = get_entry(ino, &ce, &entry, 1);
+
+  if (ret) {
+    goto out;
+  }
+
+  ret = cm_open(entry, ce, NNPFS_DATA_R); /* XXX */
+  if (ret) {
+    printf ("cm_open failed: %s\n", koerr_gettext(ret));
+    goto out;
+  }
+
+  if (entry->status.FileType != TYPE_FILE) {
+    ret = EISDIR;
+    goto out;
+  }
+
+  size_t len;
+
+  len = fcache_get_status_length(&entry->status);
+
+  if (offset < len) {
+    fbuf f;
+    
+    if (offset + size > len)
+      size = len - offset;
+    
+    ret = fcache_get_data(&entry, &ce, 0, len); /* XXX use req */
+    if (ret) {
+      printf ("fcache_get_data failed: %s\n", koerr_gettext(ret));
+      goto out;
+    }
+    
+    ret = fcache_get_fbuf(entry, &f, FBUF_READ);
+    if (!ret) {
+      fuse_reply_buf(req, (char *)fbuf_buf(&f) + offset, size);
+
+      //memcpy(buf, (char *)fbuf_buf(&f) + offset, size);
+      abuf_end(&f);
+    }
+  } else {
+    size = 0;
+  }
+
+ out:
+  if (ret) {
+    fuse_reply_err(req, EINVAL);
+  }
+  if (entry) {
+    fcache_release(entry);
+  }
+  cred_free (ce);
+}
+
+static struct fuse_lowlevel_ops arla_ll_oper = {
+  .lookup         = arla_ll_lookup,
+  .getattr        = arla_ll_getattr,
+  .readdir        = arla_ll_readdir,
+  .open           = arla_ll_open,
+  .read           = arla_ll_read,
+#if 0
+  .write          = arla_ll_write,
+  .mknod          = arla_ll_mknod,
+  .rename         = arla_ll_rename,
+  .mkdir          = arla_ll_mkdir,
+#endif
 };
 
 static struct getargs args[] = {
@@ -459,11 +610,41 @@ usage (int ret)
     exit (ret);
 }
 
+static int
+arla_fuse_main(char *mountpoint)
+{
+  struct fuse_args args = FUSE_ARGS_INIT(0, NULL);
+  struct fuse_chan *channel;
+  int ret;
+  channel = fuse_mount(mountpoint, &args);
+  if (channel == NULL) {
+    return -1;
+  }
+
+  ret = -1;
+
+  struct fuse_session *session;
+  session = fuse_lowlevel_new(&args, &arla_ll_oper,
+			      sizeof(arla_ll_oper), NULL);
+  if (session != NULL) {
+    ret = fuse_set_signal_handlers(session);
+    if (ret == 0) {
+      fuse_session_add_chan(session, channel);
+      ret = fuse_session_loop(session);
+      fuse_remove_signal_handlers(session);
+      fuse_session_remove_chan(channel);
+    }
+    fuse_session_destroy(session);
+  }
+
+  fuse_unmount(mountpoint, channel);
+
+  return ret;
+}
+
 int
 main (int argc, char **argv)
 {
-    char *fuse_argv[] = {argv[0], "-f", "-s", argv[argc - 1]};
-    int fuse_argc = sizeof(fuse_argv)/sizeof(*fuse_argv);
     int optind = 0;
     int ret;
 
@@ -501,7 +682,7 @@ main (int argc, char **argv)
 
     arla_start(NULL, cache_dir);
 
-    ret = fuse_main(fuse_argc, fuse_argv, &arla_oper, NULL);
+    arla_fuse_main(argv[0]);
 
     arla_stop();
     return ret;

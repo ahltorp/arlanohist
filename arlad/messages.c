@@ -169,7 +169,7 @@ afsfid2inode (const VenusFid *fid)
  * Setting everything except for length and mode.
  */
 
-static void
+void
 afsstatus2nnpfs_attr (AFSFetchStatus *status,
 		      const VenusFid *fid,
 		      struct nnpfs_attr *attr,
