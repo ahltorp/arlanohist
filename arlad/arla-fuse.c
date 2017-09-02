@@ -248,6 +248,14 @@ try_again (int *ret, CredCacheEntry **ce, const VenusFid *fid)
   return FALSE;
 }
 
+static int
+try_again_crosscell(int *ret, CredCacheEntry **ce, CredCacheEntry **ce2,
+		    const VenusFid *fid)
+{
+  return FALSE;
+}
+
+
 static void
 arla_ll_lookup(fuse_req_t req, fuse_ino_t parent, const char *name)
 {
@@ -538,8 +546,12 @@ arla_ll_read(fuse_req_t req, fuse_ino_t ino, size_t size,
 
       //memcpy(buf, (char *)fbuf_buf(&f) + offset, size);
       abuf_end(&f);
+    } else {
+      fuse_reply_err(req, ret);
+      ret = 0;
     }
   } else {
+    fuse_reply_buf(req, NULL, 0);
     size = 0;
   }
 
@@ -553,18 +565,586 @@ arla_ll_read(fuse_req_t req, fuse_ino_t ino, size_t size,
   cred_free (ce);
 }
 
+static void
+arla_ll_mknod(fuse_req_t req, fuse_ino_t parent, const char *name,
+                mode_t mode, dev_t rdev)
+{
+  arla_warnx (ADEBMSG, "arla_ll_mknod %lu %s", parent, name);
+
+  CredCacheEntry *ce;
+  int ret;
+  FCacheEntry *dentry = NULL;
+
+  ret = get_entry(parent, &ce, &dentry, 0);
+
+  if (ret) {
+    goto out;
+  }
+
+  arla_warnx (ADEBMSG, "arla_ll_mknod dirfid %d.%d.%d.%d", dentry->fid.Cell, dentry->fid.fid.Volume, dentry->fid.fid.Vnode, dentry->fid.fid.Unique);
+
+  VenusFid fid;
+  VenusFid dirfid;
+  VenusFid real_fid;
+  FCacheEntry *entry = NULL;
+  AFSFetchStatus status;
+  AFSStoreStatus store_status;
+
+  memset(&store_status, 0, sizeof(store_status));
+  store_status.Mask = SS_MODEBITS;
+  store_status.UnixModeBits = mode;
+
+  do {
+    ret = cm_create(&dentry, name, &store_status,
+		    &entry, &ce);
+  } while (try_again (&ret, &ce, &dentry->fid));
+
+  if (ret) {
+    goto out;
+  }
+  
+  status = entry->status;
+
+  int nodenr = add_to_nodelist(entry->fid, status.FileType);
+  
+  struct fuse_entry_param e;
+
+  struct nnpfs_attr attr;
+
+  afsstatus2nnpfs_attr (&status, &real_fid, &attr, FCACHE2NNPFSNODE_ALL);
+
+  memset(&e, 0, sizeof(e));
+  e.ino = nodenr;
+  e.generation = 1;
+  e.attr_timeout = 10000;
+  e.entry_timeout = 10000;
+  set_nnpfsattr(&e.attr, &attr);
+  fuse_reply_entry(req, &e);
+
+ out:
+  if (ret) {
+    fuse_reply_err(req, ENOENT);
+  }
+  if (entry) {
+    fcache_release(entry);
+  }
+  if (dentry) {
+    fcache_release(dentry);
+  }
+  cred_free (ce);
+  return;
+
+}
+
+static void
+arla_ll_write(fuse_req_t req, fuse_ino_t ino, const char *buf,
+	      size_t size, off_t start_offset, struct fuse_file_info *fi)
+{
+  arla_warnx (ADEBMSG, "arla_ll_write %lu %zu %zd", ino, size, start_offset);
+
+  CredCacheEntry *ce;
+  int ret;
+  FCacheEntry *entry = NULL;
+
+  ret = get_entry(ino, &ce, &entry, 1);
+
+  if (ret) {
+    goto out;
+  }
+
+  arla_warnx (ADEBMSG, "arla_ll_write dirfid %d.%d.%d.%d", entry->fid.Cell, entry->fid.fid.Volume, entry->fid.fid.Vnode, entry->fid.fid.Unique);
+
+    uint64_t blocksize;
+    uint64_t offset = 0;
+    uint64_t read_offset = 0;
+    blocksize = fcache_getblocksize();
+
+    while (size > offset) {
+      int afs_fd;
+
+	afs_fd = fcache_open_block(entry, offset, 1);
+      
+	if (afs_fd < 0) {
+	    printf ("fcache_open_file failed: %d\n", errno);
+	    goto out;
+	}
+      
+	ret = ftruncate(afs_fd, 0);
+	if (ret) {
+	    printf ("ftruncate failed: %d\n", errno);
+	    close(afs_fd);
+	    goto out;
+	}
+
+	uint64_t bytes_left = size - offset;
+	uint64_t this_block_size = min(bytes_left, blocksize);
+	ret = write(afs_fd, buf, this_block_size);
+	/* XXX remove loop, not needed when reading from memory */
+	if (ret < 0) {
+	  printf("write failed: %d\n", errno);
+	  ret = 1;
+	  goto out;
+	} else if (ret != this_block_size) {
+	  printf("short write: %d should be %d\n", ret, this_block_size);
+	  ret = 1;
+	  goto out;
+	}
+      
+	close(afs_fd);
+      
+	AFSStoreStatus store_attr;
+	memset(&store_attr, 0, sizeof(store_attr));
+      
+	ret = cm_write(entry, NNPFS_WRITE, offset, this_block_size, &store_attr, ce);
+	if (ret) {
+	    arla_warn (ADEBWARN, ret,
+		       "arla_ll_write: cannot write offset %d to server", offset);
+	    goto out;
+	}
+
+	offset += blocksize;
+      
+    }
+
+
+  fuse_reply_write(req, size);
+ out:
+  if (ret) {
+    fuse_reply_err(req, EINVAL);
+  }
+  if (entry) {
+    fcache_release(entry);
+  }
+  cred_free (ce);
+  return;
+}
+
+static void
+fuse_attr2afsstorestatus(struct stat *attr,
+			 int to_set,
+			 AFSStoreStatus *storestatus)
+{
+    int mask = 0;
+
+    if (to_set & FUSE_SET_ATTR_MODE) {
+	storestatus->UnixModeBits = attr->st_mode;
+	mask |= SS_MODEBITS;
+    }
+    if (to_set & FUSE_SET_ATTR_UID) {
+	storestatus->Owner = attr->st_uid;
+	mask |= SS_OWNER;
+    }
+    if (to_set & FUSE_SET_ATTR_GID) {
+	storestatus->Group = attr->st_gid;
+	mask |= SS_GROUP;
+    }
+    if (to_set & FUSE_SET_ATTR_MTIME) {
+	storestatus->ClientModTime = attr->st_mtime;
+	mask |= SS_MODTIME;
+    }
+    storestatus->Mask = mask;
+
+    /* SS_SegSize */
+    storestatus->SegSize = 0;
+}
+
+
+static void
+arla_ll_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *new_attr,
+		int to_set, struct fuse_file_info *fi)
+{
+  arla_warnx (ADEBMSG, "arla_ll_setattr %lu %x", ino, to_set);
+  
+  CredCacheEntry *ce;
+  int ret;
+  FCacheEntry *entry = NULL;
+
+  ret = get_entry(ino, &ce, &entry, 1);
+
+  if (ret) {
+    goto out;
+  }
+
+  arla_warnx (ADEBMSG, "arla_ll_setattr fid %d.%d.%d.%d", entry->fid.Cell, entry->fid.fid.Volume, entry->fid.fid.Vnode, entry->fid.fid.Unique);
+
+  AFSStoreStatus store_status;
+    
+  memset(&store_status, 0, sizeof(store_status));
+
+  fuse_attr2afsstorestatus(new_attr, to_set, &store_status);
+
+  if (to_set & FUSE_SET_ATTR_SIZE) {
+    do {
+      ret = cm_ftruncate (entry, new_attr->st_size, &store_status, ce);
+    } while (try_again (&ret, &ce, &entry->fid));
+    if (ret) {
+      goto out;
+    }
+  }
+
+  do {
+    ret = cm_setattr(entry, &store_status, ce);
+  } while (try_again (&ret, &ce, &entry->fid));
+  if (ret) {
+    goto out;
+  }
+
+  do {
+    ret = cm_getattr(entry, ce);
+  } while (try_again (&ret, &ce, &entry->fid));
+  
+  if (ret)
+    goto out;
+
+  struct stat attr;
+
+  struct nnpfs_attr nnpfs_attr;
+
+  afsstatus2nnpfs_attr (&entry->status, &entry->fid, &nnpfs_attr, FCACHE2NNPFSNODE_ALL);
+
+  set_nnpfsattr(&attr, &nnpfs_attr);
+  fuse_reply_attr(req, &attr, 10000);
+ out:
+  if (ret) {
+    fuse_reply_err(req, ENOENT);
+  }
+  if (entry) {
+    fcache_release(entry);
+  }
+  cred_free (ce);
+}
+
+static void
+arla_ll_rename(fuse_req_t req, fuse_ino_t parent, const char *name,
+                 fuse_ino_t newparent, const char *newname)
+{
+  arla_warnx (ADEBMSG, "arla_ll_lookup %llu %s", (long long unsigned) parent, name);
+
+  CredCacheEntry *ce;
+  CredCacheEntry *newcell_ce;
+  int ret;
+  FCacheEntry *dentry = NULL;
+  FCacheEntry *new_dentry = NULL;
+  int diff_dir;
+
+  ret = get_entry(parent, &ce, &dentry, 0);
+
+  if (ret) {
+    goto out;
+  }
+
+  diff_dir = parent != newparent;
+
+  if (diff_dir) {
+    ret = get_entry(newparent, &newcell_ce, &new_dentry, 0);
+    
+    if (ret) {
+      goto out;
+    }
+  } else {
+    newcell_ce = ce;
+    new_dentry = dentry;
+  }
+
+  int update_child = 0;
+  VenusFid child_fid;
+
+  do {
+    ret = cm_rename(&dentry, name,
+		    &new_dentry, newname,
+		    &child_fid, &update_child, &ce, &newcell_ce);
+  } while (try_again_crosscell(&ret, &ce, &newcell_ce, &dentry->fid));
+  
+
+  fuse_reply_err(req, 0);
+ out:
+  if (ret) {
+    fuse_reply_err(req, EINVAL);
+  }
+  if (dentry) {
+    fcache_release(dentry);
+  }
+  cred_free (ce);
+  if (diff_dir) {
+    if (new_dentry) {
+      fcache_release(new_dentry);
+    }
+    cred_free (newcell_ce);
+  }
+}
+
+static void
+arla_ll_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name,
+		mode_t mode)
+{
+  arla_warnx (ADEBMSG, "arla_ll_mkdir %lu %s", parent, name);
+
+  CredCacheEntry *ce;
+  int ret;
+  FCacheEntry *dentry = NULL;
+
+  ret = get_entry(parent, &ce, &dentry, 0);
+
+  if (ret) {
+    goto out;
+  }
+
+  arla_warnx (ADEBMSG, "arla_ll_mkdir dirfid %d.%d.%d.%d", dentry->fid.Cell, dentry->fid.fid.Volume, dentry->fid.fid.Vnode, dentry->fid.fid.Unique);
+
+  VenusFid fid;
+  VenusFid dirfid;
+  AFSFetchStatus status;
+  AFSStoreStatus store_status;
+
+  memset(&store_status, 0, sizeof(store_status));
+  store_status.Mask = SS_MODEBITS;
+  store_status.UnixModeBits = mode;
+
+  do {
+    ret = cm_mkdir(&dentry, name, &store_status,
+		   &fid, &status, &ce);
+  } while(try_again (&ret, &ce, &dentry->fid));
+
+  if (ret) {
+    goto out;
+  }
+  
+  int nodenr = add_to_nodelist(fid, status.FileType);
+  
+  struct fuse_entry_param e;
+
+  struct nnpfs_attr attr;
+
+  afsstatus2nnpfs_attr (&status, &fid, &attr, FCACHE2NNPFSNODE_ALL);
+
+  memset(&e, 0, sizeof(e));
+  e.ino = nodenr;
+  e.generation = 1;
+  e.attr_timeout = 10000;
+  e.entry_timeout = 10000;
+  set_nnpfsattr(&e.attr, &attr);
+  fuse_reply_entry(req, &e);
+
+ out:
+  if (ret) {
+    fuse_reply_err(req, ENOENT);
+  }
+  if (dentry) {
+    fcache_release(dentry);
+  }
+  cred_free (ce);
+  return;
+
+}
+
+static void
+arla_ll_unlink(fuse_req_t req, fuse_ino_t parent, const char *name)
+{
+  arla_warnx (ADEBMSG, "arla_ll_unlink %llu %s", (long long unsigned) parent, name);
+
+  CredCacheEntry *ce;
+  int ret;
+  FCacheEntry *dentry = NULL;
+
+  ret = get_entry(parent, &ce, &dentry, 0);
+
+  if (ret) {
+    goto out;
+  }
+
+  arla_warnx (ADEBMSG, "arla_ll_unlink dirfid %d.%d.%d.%d", dentry->fid.Cell, dentry->fid.fid.Volume, dentry->fid.fid.Vnode, dentry->fid.fid.Unique);
+
+  VenusFid fid;
+  VenusFid dirfid;
+  VenusFid real_fid;
+  FCacheEntry *entry = NULL;
+  AFSFetchStatus status;
+
+  do {
+    ret = cm_lookup (&dentry, name, &fid, &ce, TRUE);
+    dirfid = dentry->fid;
+  } while (try_again (&ret, &ce, &dirfid));
+  
+  if (ret) {
+    goto out;
+  }
+  
+  ret = fcache_get(&entry, fid, ce);
+  if (ret) {
+    goto out;
+  }
+  
+  do {
+    ret = cm_remove(&dentry, name, &entry, &ce);
+  } while (try_again (&ret, &ce, &dentry->fid));
+  
+  if (ret)
+    goto out;
+
+  fuse_reply_err(req, 0);
+ out:
+  if (ret) {
+    fuse_reply_err(req, ENOENT);
+  }
+  if (entry) {
+    fcache_release(entry);
+  }
+  if (dentry) {
+    fcache_release(dentry);
+  }
+  cred_free (ce);
+  return;
+
+}
+
+static void
+arla_ll_rmdir(fuse_req_t req, fuse_ino_t parent, const char *name)
+{
+  arla_warnx (ADEBMSG, "arla_ll_rmdir %llu %s", (long long unsigned) parent, name);
+
+  CredCacheEntry *ce;
+  int ret;
+  FCacheEntry *dentry = NULL;
+
+  ret = get_entry(parent, &ce, &dentry, 0);
+
+  if (ret) {
+    goto out;
+  }
+
+  arla_warnx (ADEBMSG, "arla_ll_rmdir dirfid %d.%d.%d.%d", dentry->fid.Cell, dentry->fid.fid.Volume, dentry->fid.fid.Vnode, dentry->fid.fid.Unique);
+
+  VenusFid fid;
+  VenusFid dirfid;
+  VenusFid real_fid;
+  FCacheEntry *entry = NULL;
+  AFSFetchStatus status;
+
+  do {
+    ret = cm_lookup (&dentry, name, &fid, &ce, TRUE);
+    dirfid = dentry->fid;
+  } while (try_again (&ret, &ce, &dirfid));
+  
+  if (ret) {
+    goto out;
+  }
+  
+  ret = fcache_get(&entry, fid, ce);
+  if (ret) {
+    goto out;
+  }
+  
+  do {
+    ret = cm_rmdir(&dentry, name, &entry, &ce);
+  } while (try_again (&ret, &ce, &dentry->fid));
+  
+  if (ret)
+    goto out;
+
+  fuse_reply_err(req, 0);
+ out:
+  if (ret) {
+    fuse_reply_err(req, ENOENT);
+  }
+  if (entry) {
+    fcache_release(entry);
+  }
+  if (dentry) {
+    fcache_release(dentry);
+  }
+  cred_free (ce);
+  return;
+  
+}
+
+static void
+arla_ll_link(fuse_req_t req, fuse_ino_t ino, fuse_ino_t newparent,
+	     const char *newname)
+{
+  arla_warnx (ADEBMSG, "arla_ll_link %lu %lu %s", ino, newparent, newname);
+
+  CredCacheEntry *ce;
+  int ret;
+  FCacheEntry *entry = NULL;
+  FCacheEntry *dentry = NULL;
+
+  if (ino == newparent) {
+    fuse_reply_err(req, EINVAL);
+    return;
+  }
+
+  ret = get_entry(ino, &ce, &entry, 1);
+
+  if (ret) {
+    goto out;
+  }
+
+  ret = get_entry(newparent, &ce, &dentry, 0);
+
+  if (ret) {
+    goto out;
+  }
+
+  arla_warnx (ADEBMSG, "arla_ll_link dirfid %d.%d.%d.%d", entry->fid.Cell, entry->fid.fid.Volume, entry->fid.fid.Vnode, entry->fid.fid.Unique);
+
+  arla_warnx (ADEBMSG, "arla_ll_link dirfid %d.%d.%d.%d", dentry->fid.Cell, dentry->fid.fid.Volume, dentry->fid.fid.Vnode, dentry->fid.fid.Unique);
+
+  VenusFid fid;
+  VenusFid dirfid;
+  AFSFetchStatus status;
+  AFSStoreStatus store_status;
+
+  do {
+    ret = cm_link(&dentry, newname, entry, &ce);
+  } while (try_again (&ret, &ce, &dentry->fid));
+
+  if (ret) {
+    goto out;
+  }
+  
+  struct fuse_entry_param e;
+
+  struct nnpfs_attr attr;
+
+  afsstatus2nnpfs_attr (&entry->status, &fid, &attr, FCACHE2NNPFSNODE_ALL);
+
+  memset(&e, 0, sizeof(e));
+  e.ino = ino;
+  e.generation = 1;
+  e.attr_timeout = 10000;
+  e.entry_timeout = 10000;
+  set_nnpfsattr(&e.attr, &attr);
+  fuse_reply_entry(req, &e);
+
+ out:
+  if (ret) {
+    fuse_reply_err(req, ENOENT);
+  }
+  if (dentry) {
+    fcache_release(dentry);
+  }
+  if (entry) {
+    fcache_release(entry);
+  }
+  cred_free (ce);
+  return;
+  
+}
+
 static struct fuse_lowlevel_ops arla_ll_oper = {
   .lookup         = arla_ll_lookup,
   .getattr        = arla_ll_getattr,
   .readdir        = arla_ll_readdir,
   .open           = arla_ll_open,
   .read           = arla_ll_read,
-#if 0
-  .write          = arla_ll_write,
   .mknod          = arla_ll_mknod,
+  .write          = arla_ll_write,
+  .setattr        = arla_ll_setattr,
   .rename         = arla_ll_rename,
   .mkdir          = arla_ll_mkdir,
-#endif
+  .rmdir          = arla_ll_rmdir,
+  .unlink         = arla_ll_unlink,
+  .link           = arla_ll_link,
 };
 
 static struct getargs args[] = {
